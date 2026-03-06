@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #3b82f6;
+  --color-brand-secondary: #6366f1;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-border: #e2e8f0;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+
+  .card-premium {
+    @apply bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-brand-primary text-white rounded-lg font-medium hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all active:scale-95;
+  }
+
+  .input-standard {
+    @apply w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all;
+  }
+}
+
+:root {
+  --font-sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}

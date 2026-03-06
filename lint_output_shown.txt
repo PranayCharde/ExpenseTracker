@@ -1,0 +1,16 @@
+﻿
+> expense@0.0.0 lint
+> eslint .
+
+
+C:\Users\prana\Desktop\Expense\src\components\layout\Sidebar.jsx
+  15:24  error  'Icon' is defined but never used  no-unused-vars
+
+C:\Users\prana\Desktop\Expense\src\pages\Budgets.jsx
+  16:23  error  'Icon' is defined but never used  no-unused-vars
+
+C:\Users\prana\Desktop\Expense\src\pages\Settings.jsx
+  18:25  error  'Icon' is defined but never used  no-unused-vars
+
+Γ£û 3 problems (3 errors, 0 warnings)
+
