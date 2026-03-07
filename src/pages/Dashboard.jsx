@@ -39,6 +39,7 @@ ChartJS.register(
 );
 
 import { useAuth } from '../context/AuthContext';
+import { CURRENCY_SYMBOL } from '../utils/currency';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -181,7 +182,7 @@ const Dashboard = () => {
              <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-lg text-xs font-bold">Real-time</span>
           </div>
           <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-1">Total Balance</p>
-          <h2 className="text-3xl font-extrabold text-gray-900">${stats.balance.toLocaleString()}</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{stats.balance.toLocaleString()}</h2>
         </Card>
 
         <Card className="hover:border-green-200 transition-colors">
@@ -192,7 +193,7 @@ const Dashboard = () => {
              <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-lg text-xs font-bold">Income</span>
           </div>
           <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-1">Monthly Income</p>
-          <h2 className="text-3xl font-extrabold text-gray-900">${stats.income.toLocaleString()}</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{stats.income.toLocaleString()}</h2>
         </Card>
 
         <Card className="hover:border-red-200 transition-colors">
@@ -203,7 +204,7 @@ const Dashboard = () => {
              <span className="text-danger bg-red-50 px-2 py-0.5 rounded-lg text-xs font-bold">Expenses</span>
           </div>
           <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-1">Monthly Expenses</p>
-          <h2 className="text-3xl font-extrabold text-gray-900">${stats.expenses.toLocaleString()}</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{stats.expenses.toLocaleString()}</h2>
         </Card>
       </div>
 
@@ -242,7 +243,7 @@ const Dashboard = () => {
                 </div>
                   <div className="text-right flex flex-col items-end">
                     <span className={`text-sm font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                      {tx.amount > 0 ? `+$${tx.amount.toFixed(2)}` : `-$${Math.abs(tx.amount).toFixed(2)}`}
+                      {tx.amount > 0 ? `+${CURRENCY_SYMBOL}${tx.amount.toFixed(2)}` : `-${CURRENCY_SYMBOL}${Math.abs(tx.amount).toFixed(2)}`}
                     </span>
                     <div className="flex items-center gap-2 mt-1">
                       {tx.receiptUrl && (

@@ -29,6 +29,7 @@ import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 ChartJS.register(ArcElement, ChartTooltip, ChartLegend, CategoryScale, LinearScale, BarElement);
 
 import { useAuth } from '../context/AuthContext';
+import { CURRENCY_SYMBOL } from '../utils/currency';
 
 const Reports = () => {
   const { user } = useAuth();
@@ -170,7 +171,7 @@ const Reports = () => {
            <div className="h-[300px] flex items-center justify-center relative">
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                  <p className="text-[10px] font-bold text-gray-400 uppercase">Total Spent</p>
-                 <h3 className="text-2xl font-extrabold text-gray-900">${pieData.total.toLocaleString()}</h3>
+                 <h3 className="text-2xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{pieData.total.toLocaleString()}</h3>
               </div>
               <Pie data={pieData} options={{ 
                 plugins: { legend: { display: false } },
@@ -208,7 +209,7 @@ const Reports = () => {
             </div>
             <h3 className="text-xl font-extrabold text-gray-900 mb-1">{topCategory.name}</h3>
             <div className="flex justify-between items-end">
-               <p className="text-sm font-bold text-gray-500">${topCategory.amount.toLocaleString()} <span className="text-xs font-medium">total</span></p>
+               <p className="text-sm font-bold text-gray-500">{CURRENCY_SYMBOL}{topCategory.amount.toLocaleString()} <span className="text-xs font-medium">total</span></p>
                <span className="text-[10px] font-bold text-gray-400 uppercase">Analysis</span>
             </div>
          </Card>
@@ -219,7 +220,7 @@ const Reports = () => {
                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Income</p>
             </div>
             <h3 className="text-xl font-extrabold text-gray-900 mb-1">
-              ${transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0).toLocaleString()}
+              {CURRENCY_SYMBOL}{transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0).toLocaleString()}
             </h3>
             <div className="flex justify-between items-end">
                <p className="text-sm font-bold text-gray-500">Across all months</p>
@@ -233,7 +234,7 @@ const Reports = () => {
                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Net Balance</p>
             </div>
             <h3 className="text-xl font-extrabold text-gray-900 mb-1">
-              ${transactions.reduce((s, t) => s + t.amount, 0).toLocaleString()}
+              {CURRENCY_SYMBOL}{transactions.reduce((s, t) => s + t.amount, 0).toLocaleString()}
             </h3>
             <div className="flex justify-between items-end">
                <p className="text-sm font-bold text-gray-500">Live Wallet Balance</p>

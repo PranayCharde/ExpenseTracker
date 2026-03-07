@@ -67,7 +67,7 @@ const LandingPage = () => {
                    <div className="flex gap-4">
                       <div className="w-48 h-24 bg-blue-50/50 rounded-xl p-4 border border-blue-50">
                         <p className="text-[10px] text-blue-600 font-bold uppercase mb-1">Total Balance</p>
-                        <p className="text-2xl font-bold text-gray-900">$24,560.00</p>
+                        <p className="text-2xl font-bold text-gray-900">₹24,560.00</p>
                       </div>
                       <div className="w-48 h-24 bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                         <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Savings Goal</p>
@@ -81,14 +81,14 @@ const LandingPage = () => {
                         <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-500"><CheckCircle2 size={16} /></div>
                         <p className="text-sm font-semibold">Amazon Purchase</p>
                       </div>
-                      <p className="text-sm font-bold text-red-500">-$64.20</p>
+                      <p className="text-sm font-bold text-red-500">-₹64.20</p>
                    </div>
                    <div className="flex items-center justify-between p-4 bg-gray-50/30 rounded-xl border border-gray-50">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center text-green-500"><CheckCircle2 size={16} /></div>
                         <p className="text-sm font-semibold">Salary Deposit</p>
                       </div>
-                      <p className="text-sm font-bold text-green-500">+$4,200.00</p>
+                      <p className="text-sm font-bold text-green-500">+₹4,200.00</p>
                    </div>
                 </div>
              </div>

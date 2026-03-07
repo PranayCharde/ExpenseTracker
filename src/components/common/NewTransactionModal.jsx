@@ -16,6 +16,7 @@ import { twMerge } from 'tailwind-merge';
 import { db, auth, storage } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { CURRENCY_SYMBOL } from '../../utils/currency';
 
 const NewTransactionModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('expense');
@@ -157,7 +158,7 @@ const NewTransactionModal = ({ isOpen, onClose }) => {
           <div className="space-y-2">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Transaction Amount</label>
             <div className="relative group">
-               <span className="absolute left-6 top-1/2 -translate-y-1/2 text-3xl font-bold text-gray-300 group-focus-within:text-brand-primary transition-colors">$</span>
+               <span className="absolute left-6 top-1/2 -translate-y-1/2 text-3xl font-bold text-gray-300 group-focus-within:text-brand-primary transition-colors">{CURRENCY_SYMBOL}</span>
                <input 
                  type="text" 
                  placeholder="0.00" 

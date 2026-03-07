@@ -19,6 +19,8 @@ import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
+import { CURRENCY_SYMBOL } from '../utils/currency';
+
 const BudgetCard = ({ icon: Icon, title, spent, goal, color = 'blue' }) => {
   const percent = Math.min((spent / goal) * 100, 100);
   const status = percent >= 100 ? 'OVER BUDGET' : percent >= 80 ? 'NEAR LIMIT' : 'SAFE';
@@ -55,9 +57,9 @@ const BudgetCard = ({ icon: Icon, title, spent, goal, color = 'blue' }) => {
       <div className="space-y-4 mb-4">
         <div className="flex justify-between items-end">
            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Spent: <span className="text-gray-900">${spent.toFixed(2)}</span></p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Spent: <span className="text-gray-900">{CURRENCY_SYMBOL}{spent.toFixed(2)}</span></p>
            </div>
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal: ${goal.toFixed(2)}</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal: {CURRENCY_SYMBOL}{goal.toFixed(2)}</p>
         </div>
         
         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -309,7 +311,7 @@ const Budgets = () => {
                 </div>
              </div>
              <div className="flex items-end gap-2 mb-4">
-                <span className="text-3xl font-extrabold text-gray-900">${budgetStats.reduce((sum, b) => sum + b.goal, 0).toLocaleString()}</span>
+                <span className="text-3xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{budgetStats.reduce((sum, b) => sum + b.goal, 0).toLocaleString()}</span>
                 <span className="text-sm font-bold text-gray-400 mb-1">/ Month</span>
              </div>
              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">

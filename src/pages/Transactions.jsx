@@ -20,6 +20,7 @@ import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 
 import { useAuth } from '../context/AuthContext';
+import { CURRENCY_SYMBOL } from '../utils/currency';
 
 const Transactions = () => {
   const { user } = useAuth();
@@ -88,7 +89,7 @@ const Transactions = () => {
            <div className="w-10 h-10 bg-blue-50 text-brand-primary rounded-xl flex items-center justify-center"><PaymentIcon size={20} /></div>
            <div>
               <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Total Balance</p>
-              <h3 className="text-xl font-extrabold text-gray-900">${stats.balance.toLocaleString()}</h3>
+              <h3 className="text-xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{stats.balance.toLocaleString()}</h3>
               <p className="text-[10px] text-green-500 font-bold">Updated just now</p>
            </div>
         </Card>
@@ -96,7 +97,7 @@ const Transactions = () => {
            <div className="w-10 h-10 bg-red-50 text-danger rounded-xl flex items-center justify-center"><ShoppingBag size={20} /></div>
            <div>
               <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Monthly Spending</p>
-              <h3 className="text-xl font-extrabold text-gray-900">${stats.spending.toLocaleString()}</h3>
+              <h3 className="text-xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{stats.spending.toLocaleString()}</h3>
               <p className="text-[10px] text-danger font-bold">Real-time sync</p>
            </div>
         </Card>
@@ -104,7 +105,7 @@ const Transactions = () => {
            <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center"><TrendingUp size={20} /></div>
            <div>
               <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Monthly Income</p>
-              <h3 className="text-xl font-extrabold text-gray-900">${stats.income.toLocaleString()}</h3>
+              <h3 className="text-xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{stats.income.toLocaleString()}</h3>
               <p className="text-[10px] text-green-500 font-bold">Stable income</p>
            </div>
         </Card>
@@ -171,7 +172,7 @@ const Transactions = () => {
                       "py-4 px-4 text-sm font-extrabold text-right",
                       tx.amount > 0 ? "text-green-600" : "text-danger"
                     )}>
-                      {tx.amount > 0 ? `+$${tx.amount.toFixed(2)}` : `-$${Math.abs(tx.amount).toFixed(2)}`}
+                      {tx.amount > 0 ? `+${CURRENCY_SYMBOL}${tx.amount.toFixed(2)}` : `-${CURRENCY_SYMBOL}${Math.abs(tx.amount).toFixed(2)}`}
                     </td>
                     <td className="py-4 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
