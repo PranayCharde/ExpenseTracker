@@ -1,7 +1,10 @@
 import React from 'react';
 import { Search, Bell, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
+  const { user } = useAuth();
+
   return (
     <nav className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-30">
       <div className="flex-1 max-w-lg">
@@ -27,7 +30,9 @@ const Navbar = () => {
         {/* Profile */}
         <div className="flex items-center gap-3 cursor-pointer group hover:bg-gray-50 p-2 rounded-xl transition-all">
           <div className="text-right">
-            <h4 className="text-sm font-bold text-gray-900 leading-tight group-hover:text-brand-primary transition-colors">Alex Morgan</h4>
+            <h4 className="text-sm font-bold text-gray-900 leading-tight group-hover:text-brand-primary transition-colors">
+              {user?.displayName || 'User'}
+            </h4>
             <p className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">Personal Account</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-primary to-indigo-400 p-0.5">

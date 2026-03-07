@@ -11,6 +11,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const SidebarItem = ({ Icon, label, to, badge }) => ( // eslint-disable-line no-unused-vars
   <NavLink
@@ -35,6 +37,18 @@ const SidebarItem = ({ Icon, label, to, badge }) => ( // eslint-disable-line no-
 );
 
 const Sidebar = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col p-4 z-40">
       {/* Brand */}
@@ -70,7 +84,10 @@ const Sidebar = () => {
       </div>
 
       {/* Logout */}
-      <button className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-danger transition-colors cursor-pointer group">
+      <button 
+        onClick={handleLogout}
+        className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-danger transition-colors cursor-pointer group w-full text-left"
+      >
         <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
         <span className="text-sm font-medium">Sign Out</span>
       </button>
