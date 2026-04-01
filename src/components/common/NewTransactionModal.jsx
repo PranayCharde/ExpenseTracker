@@ -16,9 +16,10 @@ import { twMerge } from 'tailwind-merge';
 import { db, auth, storage } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { CURRENCY_SYMBOL } from '../../utils/currency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const NewTransactionModal = ({ isOpen, onClose }) => {
+  const { symbol: CURRENCY_SYMBOL } = useCurrency();
   const [activeTab, setActiveTab] = useState('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Shopping');

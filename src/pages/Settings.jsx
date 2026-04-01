@@ -15,7 +15,7 @@ import Input from '../components/common/Input';
 import { twMerge } from 'tailwind-merge';
 import { useAuth } from '../context/AuthContext';
 import { db, auth } from '../firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { updateProfile, updateEmail } from 'firebase/auth';
 
 const SettingsItem = ({ icon: Icon, label, active = false, onClick }) => (
@@ -23,7 +23,7 @@ const SettingsItem = ({ icon: Icon, label, active = false, onClick }) => (
     onClick={onClick}
     className={twMerge(
       "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-      active ? "bg-brand-primary text-white shadow-lg shadow-blue-100" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+      active ? "bg-brand-primary text-white shadow-lg shadow-blue-100 dark:shadow-none" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
     )}
   >
     <Icon size={20} />
@@ -79,15 +79,15 @@ const Settings = () => {
         await updateEmail(user, email);
       }
 
-      // Update Firestore User Document
-      await updateDoc(doc(db, 'users', user.uid), {
+      // Update Firestore User Document using setDoc with merge
+      await setDoc(doc(db, 'users', user.uid), {
         displayName,
         email,
         currency,
         timezone,
         darkMode,
         emailAlerts
-      });
+      }, { merge: true });
 
       setMessage({ type: 'success', text: 'Settings updated successfully!' });
     } catch (err) {

@@ -29,10 +29,11 @@ import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 ChartJS.register(ArcElement, ChartTooltip, ChartLegend, CategoryScale, LinearScale, BarElement);
 
 import { useAuth } from '../context/AuthContext';
-import { CURRENCY_SYMBOL } from '../utils/currency';
+import { useCurrency } from '../hooks/useCurrency';
 
 const Reports = () => {
   const { user } = useAuth();
+  const { symbol: CURRENCY_SYMBOL } = useCurrency();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -142,6 +143,38 @@ const Reports = () => {
     return { name: top, amount: max };
   }, [transactions]);
 
+  const handleExportCSV = () => {
+    if (transactions.length === 0) return;
+    
+    // Create CSV header
+    const headers = ['Date', 'Description', 'Category', 'Type', 'Amount', 'Currency'];
+    
+    // Create CSV rows
+    const rows = transactions.map(tx => {
+      const dateStr = tx.date?.toDate().toLocaleDateString('en-US') || 'N/A';
+      return [
+        dateStr,
+        `"${tx.description || tx.category}"`,
+        `"${tx.category}"`,
+        tx.type,
+        tx.amount.toFixed(2),
+        CURRENCY_SYMBOL
+      ].join(',');
+    });
+    
+    // Combine header and rows
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+    
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `spendwise_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -157,7 +190,7 @@ const Reports = () => {
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">Financial Reports & Analytics</h1>
           <p className="text-gray-500 font-medium">Visualize your spending patterns and asset growth with precision.</p>
         </div>
-        <Button icon={Download} className="rounded-xl shadow-lg shadow-blue-100">Export CSV</Button>
+        <Button onClick={handleExportCSV} icon={Download} className="rounded-xl shadow-lg shadow-blue-100">Export CSV</Button>
       </div>
 
       <div className="flex items-center gap-4 border-b border-gray-100 pb-px">

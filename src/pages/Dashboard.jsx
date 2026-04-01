@@ -12,6 +12,7 @@ import {
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import NewTransactionModal from '../components/common/NewTransactionModal';
+import { twMerge } from 'tailwind-merge';
 import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { 
@@ -39,13 +40,18 @@ ChartJS.register(
 );
 
 import { useAuth } from '../context/AuthContext';
-import { CURRENCY_SYMBOL } from '../utils/currency';
+import { useCurrency } from '../hooks/useCurrency';
+
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { symbol: CURRENCY_SYMBOL } = useCurrency();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState('30D');
 
   useEffect(() => {
     if (!user) return;
@@ -84,19 +90,30 @@ const Dashboard = () => {
   }, [transactions]);
 
   const chartData = useMemo(() => {
-    const last30Days = Array.from({ length: 7 }, (_, i) => {
+    let daysToShow;
+    let intervalDays;
+    let points;
+
+    if (timeframe === '30D') {
+      daysToShow = 30; intervalDays = 5; points = 6;
+    } else if (timeframe === '6M') {
+      daysToShow = 180; intervalDays = 30; points = 6;
+    } else if (timeframe === '1Y') {
+      daysToShow = 365; intervalDays = 30; points = 12;
+    }
+
+    const labels = Array.from({ length: points }, (_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() - (6 - i) * 5);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      d.setDate(d.getDate() - (points - 1 - i) * intervalDays);
+      return d.toLocaleDateString('en-US', { month: 'short', day: timeframe === '30D' ? 'numeric' : undefined });
     });
 
-    // Simple grouping for the demo/dashboard: group by roughly 5-day intervals
-    const spendingData = last30Days.map((_, index) => {
-      const dayOffset = (6 - index) * 5;
+    const spendingData = labels.map((_, index) => {
+      const dayOffset = (points - 1 - index) * intervalDays;
       const start = new Date();
       start.setDate(start.getDate() - dayOffset);
       const end = new Date();
-      end.setDate(end.getDate() - (dayOffset - 5));
+      end.setDate(end.getDate() - (dayOffset - intervalDays));
 
       return transactions
         .filter(tx => tx.amount < 0 && tx.createdAt?.toDate() >= start && tx.createdAt?.toDate() < end)
@@ -104,7 +121,7 @@ const Dashboard = () => {
     });
 
     return {
-      labels: last30Days,
+      labels,
       datasets: [
         {
           fill: true,
@@ -208,12 +225,11 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Chart Section */}
-      <Card title="Spending Trends" subtitle="Overview of your activity last 30 days" headerAction={
+      <Card title="Spending Trends" subtitle={`Overview of your activity (${timeframe})`} headerAction={
         <div className="flex gap-2 bg-gray-50 p-1 rounded-lg">
-          <button className="px-3 py-1 text-xs font-bold bg-white text-gray-900 rounded-md shadow-sm border border-gray-100">30D</button>
-          <button className="px-3 py-1 text-xs font-bold text-gray-400 hover:text-gray-600">6M</button>
-          <button className="px-3 py-1 text-xs font-bold text-gray-400 hover:text-gray-600">1Y</button>
+          <button onClick={() => setTimeframe('30D')} className={twMerge("px-3 py-1 text-xs font-bold rounded-md shadow-sm border border-transparent transition-colors", timeframe === '30D' ? "bg-white text-gray-900 border-gray-100" : "text-gray-400 hover:text-gray-600")}>30D</button>
+          <button onClick={() => setTimeframe('6M')} className={twMerge("px-3 py-1 text-xs font-bold rounded-md shadow-sm border border-transparent transition-colors", timeframe === '6M' ? "bg-white text-gray-900 border-gray-100" : "text-gray-400 hover:text-gray-600")}>6M</button>
+          <button onClick={() => setTimeframe('1Y')} className={twMerge("px-3 py-1 text-xs font-bold rounded-md shadow-sm border border-transparent transition-colors", timeframe === '1Y' ? "bg-white text-gray-900 border-gray-100" : "text-gray-400 hover:text-gray-600")}>1Y</button>
         </div>
       }>
         <div className="h-[300px] w-full pt-4">
@@ -222,7 +238,7 @@ const Dashboard = () => {
       </Card>
 
       {/* Recent Transactions */}
-      <Card title="Recent Transactions" headerAction={<Button variant="ghost" size="sm" className="text-brand-primary font-bold">View all</Button>}>
+      <Card title="Recent Transactions" headerAction={<Button variant="ghost" size="sm" className="text-brand-primary font-bold" onClick={() => navigate('/transactions')}>View all</Button>}>
         <div className="space-y-6">
           {transactions.length === 0 ? (
             <div className="text-center py-12">

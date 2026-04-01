@@ -50,12 +50,12 @@ const LandingPage = () => {
         <div className="flex flex-col sm:flex-row gap-4 mb-16">
           <Link to="/dashboard">
             <Button size="lg" className="rounded-xl px-10 py-5 text-base shadow-xl shadow-blue-200">
-              Start Free Trial
+              Get Started
             </Button>
           </Link>
-          <Button variant="secondary" size="lg" className="rounded-xl px-10 py-5 text-base" icon={Play}>
+          {/* <Button variant="secondary" size="lg" className="rounded-xl px-10 py-5 text-base" icon={Play}>
             Watch Demo
-          </Button>
+          </Button> */}
         </div>
 
         {/* Hero Image Mockup - as seen in Photo 4 */}

@@ -10,22 +10,29 @@ import {
   Layers,
   CreditCard as PaymentIcon,
   ShoppingBag,
-  TrendingUp
+  TrendingUp,
+  Trash2
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import { twMerge } from 'tailwind-merge';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 
 import { useAuth } from '../context/AuthContext';
-import { CURRENCY_SYMBOL } from '../utils/currency';
+import { useCurrency } from '../hooks/useCurrency';
 
 const Transactions = () => {
   const { user } = useAuth();
+  const { symbol: CURRENCY_SYMBOL } = useCurrency();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'income', 'expense'
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!user) return;
@@ -62,6 +69,35 @@ const Transactions = () => {
 
     return { income, spending, balance };
   }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(tx => {
+      const matchCategory = filterCategory ? tx.category === filterCategory : true;
+      const matchType = filterType === 'all' ? true : 
+                        filterType === 'income' ? tx.amount > 0 : tx.amount < 0;
+      return matchCategory && matchType;
+    });
+  }, [transactions, filterCategory, filterType]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1;
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterCategory, filterType]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this transaction?")) {
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+      } catch (err) {
+        console.error("Error deleting document:", err);
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -114,15 +150,22 @@ const Transactions = () => {
       <Card className="overflow-hidden">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
            <div className="flex flex-wrap items-center gap-3">
-              <Button variant="secondary" size="sm" icon={Calendar} className="bg-gray-50 border-gray-100 font-semibold px-4 py-2">Last 30 Days</Button>
-              <Button variant="secondary" size="sm" icon={Layers} className="bg-gray-50 border-gray-100 font-semibold px-4 py-2">All Categories</Button>
-              <Button variant="secondary" size="sm" icon={PaymentIcon} className="bg-gray-50 border-gray-100 font-semibold px-4 py-2">Payment Method</Button>
+              <select 
+                value={filterCategory} 
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="bg-gray-50 border border-gray-100 text-gray-900 text-sm font-semibold rounded-lg focus:ring-brand-primary focus:border-brand-primary block p-2 outline-none"
+              >
+                <option value="">All Categories</option>
+                {[...new Set(transactions.map(t => t.category))].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
            </div>
            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg">
-              <span className="text-xs font-bold text-gray-400 px-3 uppercase">Status:</span>
-              <button className="px-4 py-1.5 text-xs font-bold bg-white text-gray-900 rounded-md shadow-sm border border-gray-100">All</button>
-              <button className="px-4 py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600">Completed</button>
-              <button className="px-4 py-1.5 text-xs font-bold text-gray-400 hover:text-gray-600">Pending</button>
+              <span className="text-xs font-bold text-gray-400 px-3 uppercase">Type:</span>
+              <button onClick={() => setFilterType('all')} className={twMerge("px-4 py-1.5 text-xs font-bold rounded-md shadow-sm transition-colors", filterType === 'all' ? "bg-white text-gray-900 border border-gray-100" : "text-gray-400 hover:text-gray-600 border border-transparent")}>All</button>
+              <button onClick={() => setFilterType('income')} className={twMerge("px-4 py-1.5 text-xs font-bold rounded-md shadow-sm transition-colors", filterType === 'income' ? "bg-white text-gray-900 border border-gray-100" : "text-gray-400 hover:text-gray-600 border border-transparent")}>Income</button>
+              <button onClick={() => setFilterType('expense')} className={twMerge("px-4 py-1.5 text-xs font-bold rounded-md shadow-sm transition-colors", filterType === 'expense' ? "bg-white text-gray-900 border border-gray-100" : "text-gray-400 hover:text-gray-600 border border-transparent")}>Expense</button>
            </div>
         </div>
 
@@ -139,12 +182,12 @@ const Transactions = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {transactions.length === 0 ? (
+              {paginatedTransactions.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-12 text-center text-gray-400 font-bold text-sm">No transactions found</td>
                 </tr>
               ) : (
-                transactions.map((tx) => (
+                paginatedTransactions.map((tx) => (
                   <tr key={tx.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="py-4 px-4 text-sm font-medium text-gray-900">{tx.dateStr}</td>
                     <td className="py-4 px-4">
@@ -181,8 +224,8 @@ const Transactions = () => {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <button className="p-1 hover:bg-white rounded-lg transition-colors text-gray-400 hover:text-gray-900">
-                        <MoreVertical size={16} />
+                      <button onClick={() => handleDelete(tx.id)} className="p-1 hover:bg-red-50 rounded-lg transition-colors text-gray-400 hover:text-red-500">
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -193,13 +236,27 @@ const Transactions = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-100 flex items-center justify-between">
-           <p className="text-xs font-bold text-gray-400">Showing {transactions.length} entries</p>
-           <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" className="p-2 border-gray-200"><ChevronLeft size={16} /></Button>
-              <button className="w-8 h-8 rounded-lg bg-brand-primary text-white text-xs font-bold shadow-md shadow-blue-100">1</button>
-              <Button variant="secondary" size="sm" className="p-2 border-gray-200"><ChevronRight size={16} /></Button>
-           </div>
-        </div>
+            <p className="text-xs font-bold text-gray-400">
+               Showing {filteredTransactions.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} entries
+            </p>
+            <div className="flex items-center gap-2">
+               <Button 
+                 variant="secondary" 
+                 size="sm" 
+                 className="p-2 border-gray-200"
+                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                 disabled={currentPage === 1}
+               ><ChevronLeft size={16} /></Button>
+               <button className="w-8 h-8 rounded-lg bg-brand-primary text-white text-xs font-bold shadow-md shadow-blue-100">{currentPage}</button>
+               <Button 
+                 variant="secondary" 
+                 size="sm" 
+                 className="p-2 border-gray-200"
+                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                 disabled={currentPage === totalPages}
+               ><ChevronRight size={16} /></Button>
+            </div>
+         </div>
       </Card>
     </div>
   );

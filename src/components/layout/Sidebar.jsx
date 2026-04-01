@@ -72,7 +72,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Upgrade Card - as seen in Photo 7 */}
-      <div className="mt-auto mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 relative overflow-hidden group">
+      {/* <div className="mt-auto mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform">
           <Sparkles className="text-brand-primary" size={48} />
         </div>
@@ -81,7 +81,7 @@ const Sidebar = () => {
         <button className="w-full py-2 bg-brand-primary text-white text-[11px] font-bold rounded-lg shadow-md shadow-blue-200 hover:bg-blue-600 transition-all active:scale-95 uppercase tracking-wider">
           Upgrade Now
         </button>
-      </div>
+      </div> */}
 
       {/* Logout */}
       <button 

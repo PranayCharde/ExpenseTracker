@@ -13,9 +13,26 @@
   --color-danger: #ef4444;
   --color-info: #3b82f6;
 
+  /* Map standard tailwind colors used in the app to theme variables so dark mode is easier */
+  --color-white: var(--color-bg-primary);
+  --color-gray-50: var(--color-bg-secondary);
+  --color-gray-100: var(--color-border);
+  --color-gray-200: color-mix(in srgb, var(--color-border) 80%, var(--color-text-secondary));
+  --color-gray-400: var(--color-text-secondary);
+  --color-gray-500: color-mix(in srgb, var(--color-text-secondary) 80%, var(--color-text-primary));
+  --color-gray-900: var(--color-text-primary);
+
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+}
+
+.dark {
+  --color-bg-primary: #1e293b;
+  --color-bg-secondary: #0f172a;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
 }
 
 @layer base {

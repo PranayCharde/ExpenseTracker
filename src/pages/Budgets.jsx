@@ -8,7 +8,8 @@ import {
   Car,
   ChevronRight,
   Wallet,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -16,12 +17,13 @@ import Badge from '../components/common/Badge';
 import Input from '../components/common/Input';
 import { twMerge } from 'tailwind-merge';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
-import { CURRENCY_SYMBOL } from '../utils/currency';
+import { useCurrency } from '../hooks/useCurrency';
 
-const BudgetCard = ({ icon: Icon, title, spent, goal, color = 'blue' }) => {
+const BudgetCard = ({ id, icon: Icon, title, spent, goal, color = 'blue', onDelete }) => {
+  const { symbol: CURRENCY_SYMBOL } = useCurrency();
   const percent = Math.min((spent / goal) * 100, 100);
   const status = percent >= 100 ? 'OVER BUDGET' : percent >= 80 ? 'NEAR LIMIT' : 'SAFE';
   
@@ -47,9 +49,18 @@ const BudgetCard = ({ icon: Icon, title, spent, goal, color = 'blue' }) => {
         <div className={twMerge('w-12 h-12 rounded-xl flex items-center justify-center', colors[color] || colors.blue)}>
            <Icon size={24} />
         </div>
-        <Badge variant={status === 'SAFE' ? 'success' : status === 'NEAR LIMIT' ? 'warning' : 'danger'}>
-          {status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={status === 'SAFE' ? 'success' : status === 'NEAR LIMIT' ? 'warning' : 'danger'}>
+            {status}
+          </Badge>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(id); }} 
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            title="Delete Budget"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
       
       <h3 className="text-xl font-bold text-gray-900 mb-6">{title}</h3>
@@ -163,6 +174,7 @@ const NewBudgetModal = ({ isOpen, onClose }) => {
 import { useAuth } from '../context/AuthContext';
 
 const Budgets = () => {
+  const { symbol: CURRENCY_SYMBOL } = useCurrency();
   const { user } = useAuth();
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -209,6 +221,16 @@ const Budgets = () => {
       return { ...budget, spent };
     });
   }, [budgets, transactions]);
+
+  const handleDeleteBudget = async (id) => {
+    if (window.confirm("Are you sure you want to delete this budget?")) {
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'budgets', id));
+      } catch (err) {
+        console.error("Error deleting budget:", err);
+      }
+    }
+  };
 
   const categoryIcons = {
     Groceries: ShoppingBag,
@@ -257,11 +279,13 @@ const Budgets = () => {
           budgetStats.map((budget) => (
             <BudgetCard 
               key={budget.id}
+              id={budget.id}
               icon={categoryIcons[budget.category] || ShoppingBag} 
               title={budget.title} 
               spent={budget.spent} 
               goal={budget.goal} 
               color={budget.color}
+              onDelete={handleDeleteBudget}
             />
           ))
         )}
