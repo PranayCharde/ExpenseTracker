@@ -2,40 +2,54 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { 
   Download, 
   PieChart as PieIcon, 
-  BarChart, 
+  BarChart3, 
   TrendingUp, 
+  TrendingDown,
   Calendar,
-  ChevronDown,
-  Info,
-  MoreHorizontal,
-  Home
+  Layers,
+  Sparkles,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { Pie, Bar } from 'react-chartjs-2';
+import { Doughnut, Bar } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, 
   ArcElement, 
   Tooltip as ChartTooltip, 
   Legend as ChartLegend,
   CategoryScale,
-  LinearScale,
+  LinearScale, 
   BarElement
 } from 'chart.js';
-import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-
-ChartJS.register(ArcElement, ChartTooltip, ChartLegend, CategoryScale, LinearScale, BarElement);
-
+import { db } from '../firebase';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { format, subMonths } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../hooks/useCurrency';
 
+ChartJS.register(ArcElement, ChartTooltip, ChartLegend, CategoryScale, LinearScale, BarElement);
+
+const PALETTE = [
+  '#3b82f6',
+  '#6366f1',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#8b5cf6',
+  '#14b8a6',
+  '#f97316',
+  '#06b6d4',
+  '#64748b'
+];
+
 const Reports = () => {
   const { user } = useAuth();
-  const { symbol: CURRENCY_SYMBOL } = useCurrency();
+  const { formatCurrency, symbol: CURRENCY_SYMBOL } = useCurrency();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reportPeriod, setReportPeriod] = useState('6M'); // '30D', '3M', '6M', '1Y'
 
   useEffect(() => {
     if (!user) return;
@@ -46,7 +60,16 @@ const Reports = () => {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTransactions(snapshot.docs.map(doc => doc.data()));
+      const txs = snapshot.docs.map(doc => {
+        const d = doc.data();
+        let jsDate = new Date();
+        if (d.date?.toDate) jsDate = d.date.toDate();
+        else if (d.createdAt?.toDate) jsDate = d.createdAt.toDate();
+        else if (d.date) jsDate = new Date(d.date);
+
+        return { ...d, id: doc.id, parsedDate: jsDate };
+      });
+      setTransactions(txs);
       setLoading(false);
     }, (error) => {
       console.error("Reports listener error:", error);
@@ -56,120 +79,143 @@ const Reports = () => {
     return unsubscribe;
   }, [user]);
 
-  const pieData = useMemo(() => {
-    const expenses = transactions.filter(tx => tx.amount < 0);
+  // Filter transactions according to report period
+  const filteredTxs = useMemo(() => {
+    const now = new Date();
+    let cutoff = new Date();
+
+    if (reportPeriod === '30D') cutoff.setDate(now.getDate() - 30);
+    else if (reportPeriod === '3M') cutoff.setMonth(now.getMonth() - 3);
+    else if (reportPeriod === '6M') cutoff.setMonth(now.getMonth() - 6);
+    else if (reportPeriod === '1Y') cutoff.setFullYear(now.getFullYear() - 1);
+
+    return transactions.filter(t => t.parsedDate >= cutoff);
+  }, [transactions, reportPeriod]);
+
+  // Aggregate stats
+  const stats = useMemo(() => {
+    const totalIncome = filteredTxs
+      .filter(tx => tx.amount > 0)
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    const totalExpenses = filteredTxs
+      .filter(tx => tx.amount < 0)
+      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const netSavings = totalIncome - totalExpenses;
+    const savingsRate = totalIncome > 0 ? Math.max(0, (netSavings / totalIncome) * 100) : 0;
+
+    return { totalIncome, totalExpenses, netSavings, savingsRate };
+  }, [filteredTxs]);
+
+  // Category breakdown for Doughnut chart & Table
+  const categoryBreakdown = useMemo(() => {
+    const expenses = filteredTxs.filter(tx => tx.amount < 0);
     const total = expenses.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
     
-    const categories = {};
+    const catMap = {};
     expenses.forEach(tx => {
-      categories[tx.category] = (categories[tx.category] || 0) + Math.abs(tx.amount);
+      const cat = tx.category || 'Other';
+      if (!catMap[cat]) {
+        catMap[cat] = { total: 0, count: 0 };
+      }
+      catMap[cat].total += Math.abs(tx.amount);
+      catMap[cat].count += 1;
     });
 
-    const labels = Object.keys(categories);
-    const data = labels.map(label => (categories[label] / total) * 100);
+    const sortedCats = Object.entries(catMap)
+      .map(([name, data], idx) => ({
+        name,
+        total: data.total,
+        count: data.count,
+        percent: total > 0 ? (data.total / total) * 100 : 0,
+        color: PALETTE[idx % PALETTE.length]
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      items: sortedCats,
+      totalExpenses: total,
+      topCategory: sortedCats[0] || null
+    };
+  }, [filteredTxs]);
+
+  // Doughnut chart data
+  const doughnutData = useMemo(() => {
+    const labels = categoryBreakdown.items.map(i => i.name);
+    const data = categoryBreakdown.items.map(i => i.total);
+    const colors = categoryBreakdown.items.map(i => i.color);
 
     return {
       labels,
-      total,
       datasets: [
         {
-          data,
-          backgroundColor: [
-            '#3b82f6',
-            '#60a5fa',
-            '#93c5fd',
-            '#bfdbfe',
-            '#2563eb',
-            '#1d4ed8'
-          ],
-          borderWidth: 0,
+          data: data.length > 0 ? data : [1],
+          backgroundColor: data.length > 0 ? colors : ['#e2e8f0'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 6
         },
       ],
     };
-  }, [transactions]);
+  }, [categoryBreakdown]);
 
+  // 6 Months bar chart (Income vs Expenses)
   const barData = useMemo(() => {
-    const last6Months = Array.from({ length: 6 }).map((_, i) => subMonths(new Date(), i)).reverse();
-    const labels = last6Months.map(date => format(date, 'MMM'));
+    const months = Array.from({ length: 6 }).map((_, i) => subMonths(new Date(), i)).reverse();
     
-    const incomeData = labels.map(() => 0);
-    const expenseData = labels.map(() => 0);
+    const incomeData = months.map(() => 0);
+    const expenseData = months.map(() => 0);
 
     transactions.forEach(tx => {
-      const txDate = tx.date?.toDate();
+      const txDate = tx.parsedDate;
       if (!txDate) return;
       
-      const monthIdx = last6Months.findIndex(m => m.getMonth() === txDate.getMonth() && m.getFullYear() === txDate.getFullYear());
-      if (monthIdx !== -1) {
-        if (tx.amount > 0) incomeData[monthIdx] += tx.amount;
-        else expenseData[monthIdx] += Math.abs(tx.amount);
+      const idx = months.findIndex(m => m.getMonth() === txDate.getMonth() && m.getFullYear() === txDate.getFullYear());
+      if (idx !== -1) {
+        if (tx.amount > 0) incomeData[idx] += tx.amount;
+        else expenseData[idx] += Math.abs(tx.amount);
       }
     });
 
     return {
-      labels,
+      labels: months.map(d => format(d, 'MMM')),
       datasets: [
         {
           label: 'Income',
           data: incomeData,
-          backgroundColor: '#3b82f6',
-          borderRadius: 4,
+          backgroundColor: '#22c55e',
+          borderRadius: 6,
         },
         {
           label: 'Expenses',
           data: expenseData,
-          backgroundColor: '#e2e8f0',
-          borderRadius: 4,
+          backgroundColor: '#ef4444',
+          borderRadius: 6,
         },
       ],
     };
   }, [transactions]);
 
-  const topCategory = useMemo(() => {
-    const expenses = transactions.filter(tx => tx.amount < 0);
-    const categories = {};
-    expenses.forEach(tx => {
-      categories[tx.category] = (categories[tx.category] || 0) + Math.abs(tx.amount);
-    });
-    
-    let top = 'N/A';
-    let max = 0;
-    Object.entries(categories).forEach(([cat, val]) => {
-      if (val > max) {
-        max = val;
-        top = cat;
-      }
-    });
-    return { name: top, amount: max };
-  }, [transactions]);
-
   const handleExportCSV = () => {
-    if (transactions.length === 0) return;
+    if (filteredTxs.length === 0) {
+      alert("No data available to export for this period.");
+      return;
+    }
     
-    // Create CSV header
     const headers = ['Date', 'Description', 'Category', 'Type', 'Amount', 'Currency'];
+    const rows = filteredTxs.map(tx => [
+      format(tx.parsedDate, 'yyyy-MM-dd'),
+      `"${(tx.description || tx.category).replace(/"/g, '""')}"`,
+      `"${(tx.category || '').replace(/"/g, '""')}"`,
+      tx.amount > 0 ? 'Income' : 'Expense',
+      Math.abs(tx.amount).toFixed(2),
+      CURRENCY_SYMBOL
+    ].join(','));
     
-    // Create CSV rows
-    const rows = transactions.map(tx => {
-      const dateStr = tx.date?.toDate().toLocaleDateString('en-US') || 'N/A';
-      return [
-        dateStr,
-        `"${tx.description || tx.category}"`,
-        `"${tx.category}"`,
-        tx.type,
-        tx.amount.toFixed(2),
-        CURRENCY_SYMBOL
-      ].join(',');
-    });
-    
-    // Combine header and rows
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
-    
-    // Create download link
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `spendwise_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute("download", `spendwise_report_${reportPeriod}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -177,104 +223,238 @@ const Reports = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-3 border-brand-primary border-t-transparent"></div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Generating Analytics...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Financial Reports & Analytics</h1>
-          <p className="text-gray-500 font-medium">Visualize your spending patterns and asset growth with precision.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            Financial Analytics & Reports
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
+            Visual breakdown of spending habits, income sources, and net savings.
+          </p>
         </div>
-        <Button onClick={handleExportCSV} icon={Download} className="rounded-xl shadow-lg shadow-blue-100">Export CSV</Button>
+
+        <div className="flex items-center gap-3">
+          {/* Period selector */}
+          <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+            {[
+              { key: '30D', label: '30D' },
+              { key: '3M', label: '3M' },
+              { key: '6M', label: '6M' },
+              { key: '1Y', label: '1Y' }
+            ].map(p => (
+              <button
+                key={p.key}
+                onClick={() => setReportPeriod(p.key)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  reportPeriod === p.key ? 'bg-brand-primary text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <Button 
+            onClick={handleExportCSV} 
+            icon={Download} 
+            className="rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-blue-100"
+          >
+            Export Report
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4 border-b border-gray-100 pb-px">
-         <button className="px-4 py-3 text-sm font-bold text-brand-primary border-b-2 border-brand-primary flex items-center gap-2">
-            <PieIcon size={18} /> Overview
-         </button>
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <Card className="p-5">
+          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Total Spending</p>
+          <h3 className="text-2xl font-black text-danger mt-1">
+            {formatCurrency(stats.totalExpenses)}
+          </h3>
+          <p className="text-[11px] text-gray-400 mt-1 font-medium">In selected {reportPeriod} period</p>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Total Earned</p>
+          <h3 className="text-2xl font-black text-green-600 mt-1">
+            {formatCurrency(stats.totalIncome)}
+          </h3>
+          <p className="text-[11px] text-gray-400 mt-1 font-medium">Income streams logged</p>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Net Cashflow</p>
+          <h3 className={`text-2xl font-black mt-1 ${stats.netSavings >= 0 ? 'text-gray-900' : 'text-danger'}`}>
+            {formatCurrency(stats.netSavings, { showSign: true })}
+          </h3>
+          <p className="text-[11px] text-gray-400 mt-1 font-medium">
+            {stats.savingsRate.toFixed(1)}% savings rate
+          </p>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Top Spending Category</p>
+          <h3 className="text-2xl font-black text-brand-primary mt-1 truncate">
+            {categoryBreakdown.topCategory?.name || 'N/A'}
+          </h3>
+          <p className="text-[11px] text-gray-400 mt-1 font-medium">
+            {categoryBreakdown.topCategory ? formatCurrency(categoryBreakdown.topCategory.total) : 'No expenses recorded'}
+          </p>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card title="Spending by Category" subtitle="Distribution analysis" headerAction={<MoreHorizontal size={20} className="text-gray-400" />}>
-           <div className="h-[300px] flex items-center justify-center relative">
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                 <p className="text-[10px] font-bold text-gray-400 uppercase">Total Spent</p>
-                 <h3 className="text-2xl font-extrabold text-gray-900">{CURRENCY_SYMBOL}{pieData.total.toLocaleString()}</h3>
-              </div>
-              <Pie data={pieData} options={{ 
-                plugins: { legend: { display: false } },
-                cutout: '70%',
-              }} />
-           </div>
-           <div className="grid grid-cols-2 gap-4 mt-8">
-              {pieData.labels.map((label, i) => (
-                <div key={label} className="flex items-center gap-2">
-                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: pieData.datasets[0].backgroundColor[i] }}></div>
-                   <span className="text-xs font-bold text-gray-500">{label} ({pieData.datasets[0].data[i].toFixed(1)}%)</span>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        {/* Doughnut Chart */}
+        <Card className="p-5 sm:p-6">
+          <div className="pb-4 border-b border-gray-100 mb-6">
+            <h3 className="text-base font-bold text-gray-900">Spending by Category</h3>
+            <p className="text-xs text-gray-400 font-medium">Distribution for the selected timeframe</p>
+          </div>
+
+          {categoryBreakdown.items.length === 0 ? (
+            <div className="py-20 text-center">
+              <PieIcon className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+              <p className="text-xs font-bold text-gray-500">No expense data in this timeframe</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="h-[260px] relative flex items-center justify-center">
+                <Doughnut 
+                  data={doughnutData} 
+                  options={{ 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: (context) => ` ${context.label}: ${formatCurrency(context.parsed)}`
+                        }
+                      }
+                    },
+                    cutout: '72%',
+                  }} 
+                />
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total</p>
+                  <h4 className="text-xl font-black text-gray-900">
+                    {formatCurrency(categoryBreakdown.totalExpenses)}
+                  </h4>
                 </div>
-              ))}
-           </div>
+              </div>
+
+              {/* Category Pills */}
+              <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
+                {categoryBreakdown.items.map((cat) => (
+                  <div key={cat.name} className="flex items-center gap-2 p-2 rounded-xl bg-gray-50/70 border border-gray-100">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                    <div className="truncate">
+                      <p className="text-xs font-bold text-gray-800 truncate">{cat.name}</p>
+                      <p className="text-[10px] text-gray-400">{cat.percent.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
 
-        <Card title="Income vs Expenses" subtitle="Trend analysis - Last 6 months">
-           <div className="h-[300px] w-full pt-4">
-              <Bar data={barData} options={{ 
-                plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, usePointStyle: true, font: { size: 11, weight: 'bold' } } } },
+        {/* 6 Months Bar Chart */}
+        <Card className="p-5 sm:p-6">
+          <div className="pb-4 border-b border-gray-100 mb-6">
+            <h3 className="text-base font-bold text-gray-900">Income vs. Expense Trend</h3>
+            <p className="text-xs text-gray-400 font-medium">Monthly comparison for past 6 months</p>
+          </div>
+
+          <div className="h-[320px] w-full pt-4">
+            <Bar 
+              data={barData} 
+              options={{ 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                  legend: { 
+                    position: 'top', 
+                    align: 'end', 
+                    labels: { boxWidth: 10, usePointStyle: true, font: { size: 11, weight: 'bold' } } 
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => ` ${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
+                    }
+                  }
+                },
                 scales: { 
-                  y: { display: false },
-                  x: { grid: { display: false }, ticks: { font: { size: 11, weight: 'bold' }, color: '#94a3b8' } }
+                  y: { 
+                    display: true, 
+                    grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false },
+                    ticks: { 
+                      color: '#94a3b8', 
+                      font: { size: 10, weight: '600' },
+                      callback: (value) => `${CURRENCY_SYMBOL}${value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}`
+                    } 
+                  },
+                  x: { 
+                    grid: { display: false }, 
+                    ticks: { font: { size: 11, weight: 'bold' }, color: '#94a3b8' } 
+                  }
                 }
-              }} />
-           </div>
+              }} 
+            />
+          </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-         <Card className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-               <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><Home size={20} /></div>
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Top Spending Category</p>
-            </div>
-            <h3 className="text-xl font-extrabold text-gray-900 mb-1">{topCategory.name}</h3>
-            <div className="flex justify-between items-end">
-               <p className="text-sm font-bold text-gray-500">{CURRENCY_SYMBOL}{topCategory.amount.toLocaleString()} <span className="text-xs font-medium">total</span></p>
-               <span className="text-[10px] font-bold text-gray-400 uppercase">Analysis</span>
-            </div>
-         </Card>
+      {/* Detailed Category Table */}
+      {categoryBreakdown.items.length > 0 && (
+        <Card className="p-5 sm:p-6">
+          <div className="pb-4 border-b border-gray-100 mb-4">
+            <h3 className="text-base font-bold text-gray-900">Category Expense Ledger</h3>
+            <p className="text-xs text-gray-400 font-medium">Breakdown of all categories spent during this period</p>
+          </div>
 
-         <Card className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-               <div className="w-10 h-10 bg-green-50 text-green-500 rounded-xl flex items-center justify-center"><TrendingUp size={20} /></div>
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Income</p>
-            </div>
-            <h3 className="text-xl font-extrabold text-gray-900 mb-1">
-              {CURRENCY_SYMBOL}{transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0).toLocaleString()}
-            </h3>
-            <div className="flex justify-between items-end">
-               <p className="text-sm font-bold text-gray-500">Across all months</p>
-               <span className="text-[10px] font-bold text-green-500 uppercase">Live</span>
-            </div>
-         </Card>
-
-         <Card className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-               <div className="w-10 h-10 bg-blue-50 text-brand-primary rounded-xl flex items-center justify-center"><PieIcon size={20} /></div>
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Net Balance</p>
-            </div>
-            <h3 className="text-xl font-extrabold text-gray-900 mb-1">
-              {CURRENCY_SYMBOL}{transactions.reduce((s, t) => s + t.amount, 0).toLocaleString()}
-            </h3>
-            <div className="flex justify-between items-end">
-               <p className="text-sm font-bold text-gray-500">Live Wallet Balance</p>
-               <span className="text-[10px] font-bold text-green-500 uppercase">Synced</span>
-            </div>
-         </Card>
-      </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Transaction Count</th>
+                  <th className="py-3 px-4">% of Total</th>
+                  <th className="py-3 px-4 text-right">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-xs font-semibold">
+                {categoryBreakdown.items.map(cat => (
+                  <tr key={cat.name} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="py-3.5 px-4 flex items-center gap-2.5">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                      <span className="font-bold text-gray-900">{cat.name}</span>
+                    </td>
+                    <td className="py-3.5 px-4 text-gray-600">{cat.count} transactions</td>
+                    <td className="py-3.5 px-4 text-gray-600">{cat.percent.toFixed(1)}%</td>
+                    <td className="py-3.5 px-4 text-right font-black text-danger">
+                      {formatCurrency(cat.total)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

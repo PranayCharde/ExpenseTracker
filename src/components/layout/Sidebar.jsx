@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Receipt, 
@@ -7,26 +7,27 @@ import {
   PieChart, 
   Settings, 
   LogOut,
-  ChevronRight,
-  Sparkles
+  X,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
-const SidebarItem = ({ Icon, label, to, badge }) => ( // eslint-disable-line no-unused-vars
+const SidebarItem = ({ icon: Icon, label, to, badge, onClick }) => (
   <NavLink
     to={to}
+    onClick={onClick}
     className={({ isActive }) => twMerge(
-      'flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group',
+      'flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group font-medium text-sm',
       isActive 
         ? 'bg-blue-50 text-brand-primary font-semibold shadow-sm shadow-blue-100/50' 
         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
     )}
   >
     <div className="flex items-center gap-3">
-      <Icon size={20} className="group-hover:text-brand-primary transition-colors" />
-      <span className="text-sm tracking-tight">{label}</span>
+      {Icon && <Icon size={20} className="group-hover:text-brand-primary transition-colors" />}
+      <span className="tracking-tight">{label}</span>
     </div>
     {badge && (
       <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase">
@@ -36,13 +37,14 @@ const SidebarItem = ({ Icon, label, to, badge }) => ( // eslint-disable-line no-
   </NavLink>
 );
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await logout();
+      onClose?.();
       navigate('/login');
     } catch (error) {
       console.error('Failed to log out', error);
@@ -50,47 +52,64 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col p-4 z-40">
-      {/* Brand */}
-      <div className="flex items-center gap-2 px-4 py-6 mb-4">
-        <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 ring-4 ring-blue-50">
-          <Wallet size={24} />
+    <aside 
+      className={twMerge(
+        'fixed inset-y-0 left-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col p-4 z-50 transition-transform duration-300 ease-in-out',
+        isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+      )}
+    >
+      {/* Brand & Mobile Close Button */}
+      <div className="flex items-center justify-between px-2 py-4 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 ring-4 ring-blue-50">
+            <Wallet size={22} />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-gray-900 leading-tight">SpendWise</h1>
+            <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Smart Finance</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">SpendWise</h1>
-          <p className="text-[10px] text-gray-500 font-medium tracking-widest uppercase">Smart Tracking</p>
-        </div>
+
+        {/* Close Button on Mobile */}
+        <button 
+          onClick={onClose}
+          className="lg:hidden p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+          aria-label="Close sidebar"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto">
-        <SidebarItem Icon={LayoutDashboard} label="Dashboard" to="/dashboard" />
-        <SidebarItem Icon={Receipt} label="Transactions" to="/transactions" />
-        <SidebarItem Icon={Wallet} label="Budgets" to="/budgets" />
-        <SidebarItem Icon={PieChart} label="Reports" to="/reports" />
-        <SidebarItem Icon={Settings} label="Settings" to="/settings" />
+      <nav className="flex-1 space-y-1 overflow-y-auto pt-2">
+        <SidebarItem icon={LayoutDashboard} label="Dashboard" to="/dashboard" onClick={onClose} />
+        <SidebarItem icon={Receipt} label="Transactions" to="/transactions" onClick={onClose} />
+        <SidebarItem icon={Wallet} label="Budgets" to="/budgets" onClick={onClose} />
+        <SidebarItem icon={PieChart} label="Reports" to="/reports" onClick={onClose} />
+        <SidebarItem icon={Settings} label="Settings" to="/settings" onClick={onClose} />
       </nav>
 
-      {/* Upgrade Card - as seen in Photo 7 */}
-      {/* <div className="mt-auto mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform">
-          <Sparkles className="text-brand-primary" size={48} />
+      {/* Cloud Security Indicator */}
+      <div className="mt-auto mb-4 p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100/60">
+        <div className="flex items-center gap-2 mb-1.5 text-brand-primary">
+          <ShieldCheck size={16} />
+          <span className="text-xs font-bold uppercase tracking-wider">Firebase Cloud</span>
         </div>
-        <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">Pro Plan</h4>
-        <p className="text-[11px] text-blue-700 font-medium leading-relaxed mb-4">Get advanced analytics and insights.</p>
-        <button className="w-full py-2 bg-brand-primary text-white text-[11px] font-bold rounded-lg shadow-md shadow-blue-200 hover:bg-blue-600 transition-all active:scale-95 uppercase tracking-wider">
-          Upgrade Now
-        </button>
-      </div> */}
+        <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+          Your personal data is encrypted & synced across your devices.
+        </p>
+      </div>
 
-      {/* Logout */}
-      <button 
-        onClick={handleLogout}
-        className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-danger transition-colors cursor-pointer group w-full text-left"
-      >
-        <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
-        <span className="text-sm font-medium">Sign Out</span>
-      </button>
+      {/* User Info & Logout */}
+      <div className="border-t border-gray-100 pt-3">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 text-gray-500 hover:text-danger hover:bg-red-50/50 rounded-xl transition-colors cursor-pointer group w-full text-left"
+        >
+          <LogOut size={18} className="group-hover:translate-x-0.5 transition-transform" />
+          <span className="text-sm font-semibold">Sign Out</span>
+        </button>
+      </div>
     </aside>
   );
 };

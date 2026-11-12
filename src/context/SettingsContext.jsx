@@ -3,30 +3,24 @@ import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 
+const DEFAULT_SETTINGS = {
+  currency: 'INR',
+  timezone: 'GMT+5:30',
+  darkMode: false,
+  emailAlerts: true
+};
+
 const SettingsContext = createContext();
 
 export const useSettings = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }) => {
   const { user } = useAuth();
-  const [settings, setSettings] = useState({
-    currency: 'USD',
-    timezone: 'GMT-5',
-    darkMode: false,
-    emailAlerts: true
-  });
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loadingContext, setLoadingContext] = useState(true);
 
   useEffect(() => {
     if (!user) {
-      // Reset settings if user logs out
-      setSettings({
-        currency: 'USD',
-        timezone: 'GMT-5',
-        darkMode: false,
-        emailAlerts: true
-      });
-      setLoadingContext(false);
       return;
     }
 
@@ -34,12 +28,15 @@ export const SettingsProvider = ({ children }) => {
       if (docsnap.exists()) {
         const data = docsnap.data();
         setSettings({
-          currency: data.currency || 'USD',
-          timezone: data.timezone || 'GMT-5',
+          currency: data.currency || 'INR',
+          timezone: data.timezone || 'GMT+5:30',
           darkMode: data.darkMode || false,
           emailAlerts: data.emailAlerts !== undefined ? data.emailAlerts : true
         });
       }
+      setLoadingContext(false);
+    }, (err) => {
+      console.warn("Settings snapshot listener error:", err);
       setLoadingContext(false);
     });
 

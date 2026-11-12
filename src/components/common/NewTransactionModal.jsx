@@ -1,321 +1,460 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
-  DollarSign, 
   Calendar as CalendarIcon, 
   ChevronDown, 
-  ChevronLeft, 
-  ChevronRight,
-  Upload,
-  Layers,
-  Check
+  Upload, 
+  Layers, 
+  Trash2,
+  FileText,
+  AlertCircle,
+  Image as ImageIcon,
+  CheckCircle2,
+  Camera
 } from 'lucide-react';
 import Button from '../common/Button';
-import Input from '../common/Input';
 import { twMerge } from 'tailwind-merge';
 import { db, auth, storage } from '../../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useCurrency } from '../../hooks/useCurrency';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../utils/constants';
+import { compressReceiptImage } from '../../utils/receiptHelper';
 
-const NewTransactionModal = ({ isOpen, onClose }) => {
+const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTransactionAdded }) => {
   const { symbol: CURRENCY_SYMBOL } = useCurrency();
-  const [activeTab, setActiveTab] = useState('expense');
+  const fileInputRef = useRef(null);
+
+  const [activeTab, setActiveTab] = useState(defaultType); // 'expense' or 'income'
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Shopping');
+  const [category, setCategory] = useState(defaultType === 'income' ? 'Salary' : 'Shopping');
   const [description, setDescription] = useState('');
+  const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
   const [receiptFile, setReceiptFile] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  // Date Picker State
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewDate, setViewDate] = useState(new Date());
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultType);
+      setCategory(defaultType === 'income' ? 'Salary' : 'Shopping');
+      setAmount('');
+      setDescription('');
+      setDateStr(new Date().toISOString().split('T')[0]);
+      setReceiptFile(null);
+      setReceiptPreview(null);
+      setIsDragging(false);
+      setErrorMessage('');
+      setUploadStatus('');
+    }
+  }, [isOpen, defaultType]);
 
-  // Calendar Helpers
-  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-
-  const handlePrevMonth = () => {
-    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCategory(tab === 'income' ? 'Salary' : 'Shopping');
   };
 
-  const handleNextMonth = () => {
-    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
-  };
+  const processSelectedFile = (file) => {
+    if (!file) return;
 
-  const isSelected = (day) => {
-    return selectedDate.getDate() === day && 
-           selectedDate.getMonth() === viewDate.getMonth() && 
-           selectedDate.getFullYear() === viewDate.getFullYear();
-  };
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage('Receipt file size must be less than 10MB.');
+      return;
+    }
 
-  const handleDateSelect = (day) => {
-    setSelectedDate(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
+    setReceiptFile(file);
+    setErrorMessage('');
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setReceiptPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setReceiptPreview(null);
+    }
   };
 
   const handleFileChange = (e) => {
-    if (e.target.files[0]) {
-      setReceiptFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      processSelectedFile(e.target.files[0]);
     }
   };
 
-  const handleSave = async () => {
-    console.log("Starting handleSave...");
-    if (!amount || isNaN(amount)) {
-      alert("Please enter a valid amount.");
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleRemoveReceipt = () => {
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleQuickDate = (offsetDays) => {
+    const d = new Date();
+    d.setDate(d.getDate() - offsetDays);
+    setDateStr(d.toISOString().split('T')[0]);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setErrorMessage('Please enter a valid positive amount.');
       return;
     }
-    
+
+    const user = auth.currentUser;
+    if (!user) {
+      setErrorMessage('You must be signed in to add transactions.');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("No user found in handleSave");
-        alert("You must be logged in to save transactions.");
-        setLoading(false);
-        return;
-      }
+      let finalReceiptUrl = null;
 
-      console.log("User authenticated:", user.uid);
-
-      let receiptUrl = '';
       if (receiptFile) {
-        console.log("Found receipt file, starting upload:", receiptFile.name);
+        setUploadStatus('Processing receipt...');
+
+        // 1. Prepare compressed Base64 data URL as high-reliability guarantee
+        let base64Fallback = null;
         try {
-          const fileRef = ref(storage, `receipts/${user.uid}/${Date.now()}_${receiptFile.name}`);
+          base64Fallback = await compressReceiptImage(receiptFile, 1200, 0.8);
+        } catch (compErr) {
+          console.warn("Compression warning, using direct preview", compErr);
+          base64Fallback = receiptPreview;
+        }
+
+        // 2. Try Firebase Cloud Storage first
+        setUploadStatus('Uploading receipt to cloud...');
+        try {
+          const safeName = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const fileRef = ref(storage, `receipts/${user.uid}/${Date.now()}_${safeName}`);
           const snapshot = await uploadBytes(fileRef, receiptFile);
-          receiptUrl = await getDownloadURL(snapshot.ref);
-          console.log("File uploaded successfully, URL:", receiptUrl);
-        } catch (uploadError) {
-          console.error("Error uploading file:", uploadError);
-          alert("Failed to upload the receipt photo. " + (uploadError.code === 'storage/unauthorized' ? "Permission denied." : "Check if Storage is enabled in your Firebase Console."));
-          setLoading(false);
-          return;
+          finalReceiptUrl = await getDownloadURL(snapshot.ref);
+          console.log("Uploaded receipt to Firebase Storage:", finalReceiptUrl);
+        } catch (storageErr) {
+          console.warn("Cloud Storage error; using local/base64 backup to ensure receipt is saved:", storageErr);
+          // Automatic seamless fallback to compressed base64 data url
+          finalReceiptUrl = base64Fallback;
         }
       }
 
-      console.log("Preparing transaction data...");
+      setUploadStatus('Saving to ledger...');
+
+      // Convert date string into Date object
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const transactionDate = new Date(year, month - 1, day, 12, 0, 0);
+
+      const isExpense = activeTab === 'expense';
+      const finalAmount = isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount);
+
       const transactionData = {
         userId: user.uid,
-        amount: parseFloat(amount) * (activeTab === 'expense' ? -1 : 1),
+        amount: finalAmount,
         type: activeTab,
-        category,
-        description,
-        receiptUrl,
-        date: selectedDate,
+        category: category.trim(),
+        description: description.trim() || category.trim(),
+        receiptUrl: finalReceiptUrl || null,
+        date: Timestamp.fromDate(transactionDate),
         createdAt: serverTimestamp(),
       };
 
-      console.log("Adding document to Firestore subcollection...");
-      const docRef = await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
-      console.log("Document added with ID:", docRef.id);
-      
+      await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
+
+      onTransactionAdded?.();
       onClose();
-      // Reset form
-      setAmount('');
-      setCategory('Shopping');
-      setDescription('');
-      setReceiptFile(null);
-      setSelectedDate(new Date());
-    } catch (error) {
-      console.error('General error in handleSave:', error);
-      alert("Error saving transaction: " + error.message);
+    } catch (err) {
+      console.error('Error adding transaction:', err);
+      setErrorMessage(err.message || 'Failed to save transaction. Please try again.');
     } finally {
-      console.log("Finished handleSave attempt.");
       setLoading(false);
+      setUploadStatus('');
     }
   };
 
-  const days = Array.from({ length: getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }, (_, i) => i + 1);
-  const emptyDays = Array.from({ length: getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }, (_, i) => i);
+  if (!isOpen) return null;
+
+  const currentCategories = activeTab === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-200">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" 
+        className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" 
         onClick={onClose}
-      ></div>
+      />
 
-      {/* Modal - Slide over from right */}
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col p-8 overflow-y-auto animate-in slide-in-from-right duration-500">
-        <div className="flex items-center justify-between mb-8">
+      {/* Modal Drawer */}
+      <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col p-6 sm:p-8 overflow-y-auto z-10 animate-in slide-in-from-right duration-300">
+        <div className="flex items-center justify-between pb-5 border-b border-gray-100 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 leading-tight">New Transaction</h2>
-            <p className="text-xs text-gray-400 font-medium tracking-tight">Record a new expense or income</p>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">
+              {activeTab === 'expense' ? 'Record Expense' : 'Record Income'}
+            </h2>
+            <p className="text-xs text-gray-400 font-medium mt-0.5">
+              Securely stored in your personal cloud ledger
+            </p>
           </div>
           <button 
+            type="button"
             onClick={onClose}
-            className="p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-400 hover:text-gray-900"
+            className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
         </div>
 
-        <div className="space-y-8">
+        {errorMessage && (
+          <div className="mb-5 p-3.5 rounded-xl bg-red-50 text-danger text-xs font-bold flex items-center gap-2 border border-red-100 animate-shake">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSave} className="space-y-5 flex-1 flex flex-col">
+          {/* Type Toggle */}
+          <div className="flex bg-gray-100/80 p-1.5 rounded-2xl">
+            <button 
+              type="button"
+              onClick={() => handleTabChange('expense')}
+              className={twMerge(
+                "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all",
+                activeTab === 'expense' 
+                  ? "bg-white text-danger shadow-sm" 
+                  : "text-gray-500 hover:text-gray-900"
+              )}
+            >
+              Expense (-)
+            </button>
+            <button 
+              type="button"
+              onClick={() => handleTabChange('income')}
+              className={twMerge(
+                "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all",
+                activeTab === 'income' 
+                  ? "bg-white text-green-600 shadow-sm" 
+                  : "text-gray-500 hover:text-gray-900"
+              )}
+            >
+              Income (+)
+            </button>
+          </div>
+
           {/* Amount Input */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Transaction Amount</label>
-            <div className="relative group">
-               <span className="absolute left-6 top-1/2 -translate-y-1/2 text-3xl font-bold text-gray-300 group-focus-within:text-brand-primary transition-colors">{CURRENCY_SYMBOL}</span>
-               <input 
-                 type="text" 
-                 placeholder="0.00" 
-                 value={amount}
-                 onChange={(e) => setAmount(e.target.value)}
-                 className="w-full text-5xl font-extrabold text-gray-900 bg-gray-50/50 border-none rounded-2xl py-10 pl-16 pr-6 focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all outline-none placeholder:text-gray-200"
-               />
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Amount ({CURRENCY_SYMBOL})
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-400">
+                {CURRENCY_SYMBOL}
+              </span>
+              <input 
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full pl-10 pr-4 py-3.5 text-2xl font-black bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all text-gray-900"
+              />
             </div>
           </div>
 
-          {/* Type Toggle */}
-          <div className="flex bg-gray-50 p-1 rounded-xl">
-             <button 
-               onClick={() => setActiveTab('expense')}
-               className={twMerge(
-                 "flex-1 py-3 text-sm font-bold rounded-lg transition-all",
-                 activeTab === 'expense' ? "bg-white text-brand-primary shadow-sm" : "text-gray-400 hover:text-gray-600"
-               )}
-             >Expense</button>
-             <button 
-               onClick={() => setActiveTab('income')}
-               className={twMerge(
-                 "flex-1 py-3 text-sm font-bold rounded-lg transition-all",
-                 activeTab === 'income' ? "bg-white text-brand-primary shadow-sm" : "text-gray-400 hover:text-gray-600"
-               )}
-             >Income</button>
-             <button 
-               onClick={() => setActiveTab('transfer')}
-               className={twMerge(
-                 "flex-1 py-3 text-sm font-bold rounded-lg transition-all",
-                 activeTab === 'transfer' ? "bg-white text-brand-primary shadow-sm" : "text-gray-400 hover:text-gray-600"
-               )}
-             >Transfer</button>
-          </div>
-
           {/* Category Select */}
-          <div className="space-y-2">
-             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Category</label>
-             <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-primary transition-colors">
-                   <Layers size={18} />
-                </div>
-                <select 
-                  className="input-standard appearance-none pl-12 h-14 bg-gray-50/50 border-gray-100 font-bold text-gray-900 focus:bg-white pr-10"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                   <option>Shopping</option>
-                   <option>Dining</option>
-                   <option>Food</option>
-                   <option>Transport</option>
-                   <option>Rent</option>
-                   <option>Salary</option>
-                </select>
-                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-             </div>
-          </div>
-
-          {/* Calendar Picker */}
-          <div className="space-y-4">
-             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Transaction Date</label>
-             <div className="border border-gray-100 rounded-2xl p-6 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-8">
-                   <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400"><ChevronLeft size={18} /></button>
-                   <h4 className="text-sm font-bold text-gray-900 leading-tight">
-                    {viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                   </h4>
-                   <button onClick={handleNextMonth} className="p-1 hover:bg-gray-50 rounded-lg text-gray-400"><ChevronRight size={18} /></button>
-                </div>
-                <div className="grid grid-cols-7 gap-y-4 text-center">
-                   {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                     <span key={`${d}-${i}`} className="text-[10px] font-bold text-gray-300 uppercase">{d}</span>
-                   ))}
-                   {emptyDays.map((_, i) => (
-                     <div key={`empty-${i}`} />
-                   ))}
-                   {days.map(d => (
-                     <button 
-                       key={d} 
-                       onClick={() => handleDateSelect(d)}
-                       className={twMerge(
-                         "w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-colors mx-auto",
-                         isSelected(d) ? "bg-brand-primary text-white shadow-md shadow-blue-100" : "text-gray-500 hover:bg-gray-50"
-                       )}
-                     >
-                       {d}
-                     </button>
-                   ))}
-                </div>
-             </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Category
+            </label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <Layers size={18} />
+              </div>
+              <select 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full appearance-none pl-11 pr-10 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
+              >
+                {currentCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Description</label>
-             <textarea 
-               placeholder="What was this for?" 
-               value={description}
-               onChange={(e) => setDescription(e.target.value)}
-               className="w-full h-32 input-standard bg-gray-50/50 border-gray-100 focus:bg-white p-4 resize-none"
-             ></textarea>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Description / Note (Optional)
+            </label>
+            <input 
+              type="text"
+              placeholder="e.g. Grocery store, dinner bill, invoice #104..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
+            />
           </div>
 
-          {/* Attachment */}
+          {/* Date Picker with Quick Selectors */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Date
+              </label>
+              <div className="flex gap-2">
+                <button 
+                  type="button" 
+                  onClick={() => handleQuickDate(0)} 
+                  className="text-[11px] font-bold text-brand-primary hover:underline"
+                >
+                  Today
+                </button>
+                <span className="text-gray-300">•</span>
+                <button 
+                  type="button" 
+                  onClick={() => handleQuickDate(1)} 
+                  className="text-[11px] font-bold text-gray-500 hover:text-brand-primary"
+                >
+                  Yesterday
+                </button>
+              </div>
+            </div>
+            <input 
+              type="date"
+              required
+              value={dateStr}
+              onChange={(e) => setDateStr(e.target.value)}
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
+            />
+          </div>
+
+          {/* Receipt / Invoice Attachment */}
           <div className="space-y-2">
-             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Receipt Attachment</label>
-             <div 
-               onClick={() => document.getElementById('receipt-upload').click()}
-               className={twMerge(
-                 "border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center group transition-all cursor-pointer",
-                 receiptFile ? "border-brand-primary bg-blue-50/30" : "border-gray-100 bg-gray-50/30 hover:border-brand-primary hover:bg-blue-50/30"
-               )}
-             >
-                <input 
-                  id="receipt-upload"
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*,.pdf"
-                  onChange={handleFileChange}
-                />
-                <div className={twMerge(
-                  "w-12 h-12 rounded-xl shadow-sm border flex items-center justify-center transition-colors mb-4",
-                  receiptFile ? "bg-brand-primary text-white border-brand-primary" : "bg-white text-gray-400 border-gray-100 group-hover:text-brand-primary"
-                )}>
-                   {receiptFile ? <Check size={24} /> : <Upload size={24} />}
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon size={15} className="text-brand-primary" />
+                Receipt / Invoice (Optional)
+              </label>
+              {receiptFile && (
+                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle2 size={12} /> Ready to save
+                </span>
+              )}
+            </div>
+
+            {/* Hidden File Input */}
+            <input 
+              ref={fileInputRef}
+              type="file" 
+              accept="image/*,application/pdf"
+              onChange={handleFileChange} 
+              className="hidden" 
+            />
+
+            {receiptFile ? (
+              /* Attached Preview Card */
+              <div className="p-3 bg-blue-50/40 border border-blue-100 rounded-2xl flex items-center justify-between gap-3 animate-in fade-in">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  {receiptPreview ? (
+                    <img 
+                      src={receiptPreview} 
+                      alt="Receipt preview" 
+                      className="w-14 h-14 rounded-xl object-cover border border-blue-200 shrink-0 bg-white shadow-sm" 
+                    />
+                  ) : (
+                    <div className="w-14 h-14 bg-white text-brand-primary rounded-xl flex items-center justify-center shrink-0 border border-blue-200">
+                      <FileText size={24} />
+                    </div>
+                  )}
+                  <div className="truncate">
+                    <p className="text-xs font-bold text-gray-900 truncate">{receiptFile.name}</p>
+                    <p className="text-[11px] text-gray-500">{(receiptFile.size / 1024).toFixed(1)} KB • Attached</p>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[10px] font-bold text-brand-primary hover:underline mt-0.5"
+                    >
+                      Change photo
+                    </button>
+                  </div>
                 </div>
-                <p className="text-[11px] font-bold text-gray-900 mb-1">
-                  {receiptFile ? receiptFile.name : 'Upload Receipt'}
-                </p>
-                <p className="text-[10px] text-gray-400 font-medium">
-                  {receiptFile ? `${(receiptFile.size / 1024 / 1024).toFixed(2)} MB` : 'PNG, JPG or PDF up to 10MB'}
-                </p>
-                {receiptFile && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setReceiptFile(null);
-                    }}
-                    className="mt-4 text-[10px] font-bold text-danger uppercase tracking-widest hover:underline"
-                  >Remove File</button>
+                <button 
+                  type="button"
+                  onClick={handleRemoveReceipt}
+                  className="p-2 text-gray-400 hover:text-danger hover:bg-red-50 rounded-xl transition-colors shrink-0"
+                  title="Remove receipt"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ) : (
+              /* Upload / Drop Area */
+              <div 
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={twMerge(
+                  "flex flex-col items-center justify-center p-5 border-2 border-dashed rounded-2xl cursor-pointer transition-all text-center",
+                  isDragging 
+                    ? "border-brand-primary bg-blue-50/60 scale-[0.99]" 
+                    : "border-gray-200 hover:border-brand-primary bg-gray-50/50 hover:bg-blue-50/30"
                 )}
-             </div>
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-brand-primary flex items-center justify-center mb-2 shadow-sm">
+                  <Upload size={18} />
+                </div>
+                <p className="text-xs font-bold text-gray-800">
+                  Click to select photo or drag & drop here
+                </p>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Supports PNG, JPG, JPEG, WebP, PDF up to 10MB
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
-             <Button variant="secondary" className="flex-1 py-4 font-bold rounded-xl" onClick={onClose} disabled={loading}>Cancel</Button>
-             <Button 
-               className="flex-2 py-4 font-bold rounded-xl shadow-xl shadow-blue-200" 
-               onClick={handleSave}
-               disabled={loading}
-             >
-               {loading ? 'Saving...' : 'Save Transaction'}
-             </Button>
+          {/* Submit Button */}
+          <div className="pt-3 mt-auto">
+            <Button 
+              type="submit" 
+              className="w-full py-4 rounded-2xl font-bold shadow-lg shadow-blue-100" 
+              disabled={loading}
+            >
+              {loading 
+                ? (uploadStatus || 'Saving...') 
+                : activeTab === 'expense' ? 'Save Expense' : 'Save Income'}
+            </Button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

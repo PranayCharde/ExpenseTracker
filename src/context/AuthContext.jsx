@@ -5,10 +5,14 @@ import {
   createUserWithEmailAndPassword, 
   signOut,
   updateProfile,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { db, auth, googleProvider } from '../firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -37,13 +41,13 @@ export const AuthProvider = ({ children }) => {
     // Create Firestore User Document
     await setDoc(doc(db, 'users', user.uid), {
       uid: user.uid,
-      displayName,
+      displayName: displayName || 'User',
       email,
-      currency: 'USD',
-      timezone: 'GMT-5',
+      currency: 'INR',
+      timezone: 'GMT+5:30',
       darkMode: false,
       emailAlerts: true,
-      createdAt: new Date()
+      createdAt: serverTimestamp()
     }, { merge: true });
 
     return user;
@@ -58,20 +62,21 @@ export const AuthProvider = ({ children }) => {
     const user = result.user;
     
     // Check if user document exists in Firestore
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
     
     if (!userDoc.exists()) {
       // Create user document for Google users
-      await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(userDocRef, {
         uid: user.uid,
-        displayName: user.displayName,
+        displayName: user.displayName || 'Google User',
         email: user.email,
-        currency: 'USD',
-        timezone: 'GMT-5',
+        currency: 'INR',
+        timezone: 'GMT+5:30',
         darkMode: false,
         emailAlerts: true,
-        createdAt: new Date()
-      });
+        createdAt: serverTimestamp()
+      }, { merge: true });
     }
     
     return user;
@@ -81,12 +86,28 @@ export const AuthProvider = ({ children }) => {
     return signOut(auth);
   };
 
+  const resetPassword = (email) => {
+    return sendPasswordResetEmail(auth, email);
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    if (!auth.currentUser || !auth.currentUser.email) {
+      throw new Error("No authenticated user found.");
+    }
+    // Re-authenticate user first
+    const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+    await reauthenticateWithCredential(auth.currentUser, credential);
+    await updatePassword(auth.currentUser, newPassword);
+  };
+
   const value = {
     user,
     signup,
     login,
     googleLogin,
     logout,
+    resetPassword,
+    changePassword,
     loading
   };
 

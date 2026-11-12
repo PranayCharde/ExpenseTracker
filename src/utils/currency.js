@@ -1,14 +1,19 @@
 export const CURRENCY_SYMBOL = '₹';
 
-export const formatCurrency = (amount) => {
-    const isNegative = amount < 0;
-    const formattedAmount = Math.abs(amount).toLocaleString(undefined, {
+export const formatCurrency = (amount, symbol = CURRENCY_SYMBOL) => {
+    const num = Number(amount) || 0;
+    const isNegative = num < 0;
+    const locale = symbol === '₹' ? 'en-IN' : undefined;
+    const formattedAmount = Math.abs(num).toLocaleString(locale, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
-    return `${isNegative ? '-' : ''}${CURRENCY_SYMBOL}${formattedAmount}`;
+    return `${isNegative ? '-' : ''}${symbol}${formattedAmount}`;
 };
 
-export const formatCurrencyCompact = (amount) => {
-    return `${CURRENCY_SYMBOL}${amount.toLocaleString()}`;
+export const formatCurrencyCompact = (amount, symbol = CURRENCY_SYMBOL) => {
+    const num = Number(amount) || 0;
+    const isNegative = num < 0;
+    const locale = symbol === '₹' ? 'en-IN' : undefined;
+    return `${isNegative ? '-' : ''}${symbol}${Math.abs(num).toLocaleString(locale)}`;
 };
