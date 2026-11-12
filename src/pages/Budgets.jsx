@@ -444,7 +444,7 @@ const Budgets = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
           {/* Month Switcher */}
           <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
             <button 
@@ -456,7 +456,7 @@ const Budgets = () => {
             </button>
             <button
               onClick={handleCurrentMonth}
-              className="px-3 text-xs font-bold text-gray-800 hover:text-brand-primary"
+              className="px-2.5 sm:px-3 text-xs font-bold text-gray-800 hover:text-brand-primary whitespace-nowrap"
               title="Jump to Current Month"
             >
               {format(selectedMonth, 'MMM yyyy')}
@@ -473,7 +473,7 @@ const Budgets = () => {
           <Button 
             onClick={() => setIsModalOpen(true)}
             icon={Plus} 
-            className="rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-blue-100"
+            className="rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-blue-100 whitespace-nowrap"
           >
             Add Budget
           </Button>

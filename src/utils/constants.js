@@ -1,16 +1,17 @@
 export const EXPENSE_CATEGORIES = [
   'Shopping',
-  'Dining & Food',
+  'Dining',
+  'Food',
+  'Transport',
+  'Rent',
   'Groceries',
-  'Transportation',
-  'Housing & Rent',
-  'Entertainment',
   'Utilities & Bills',
+  'Entertainment',
   'Healthcare',
   'Travel',
   'Education',
   'Personal Care',
-  'Other Expense'
+  'Other'
 ];
 
 export const INCOME_CATEGORIES = [
@@ -19,6 +20,6 @@ export const INCOME_CATEGORIES = [
   'Investments',
   'Gifts & Bonus',
   'Refunds',
-  'Other Income'
+  'Other'
 ];
 

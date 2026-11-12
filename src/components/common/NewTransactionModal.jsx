@@ -28,6 +28,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
   const [activeTab, setActiveTab] = useState(defaultType); // 'expense' or 'income'
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(defaultType === 'income' ? 'Salary' : 'Shopping');
+  const [customCategory, setCustomCategory] = useState('');
   const [description, setDescription] = useState('');
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
   const [receiptFile, setReceiptFile] = useState(null);
@@ -41,6 +42,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
     if (isOpen) {
       setActiveTab(defaultType);
       setCategory(defaultType === 'income' ? 'Salary' : 'Shopping');
+      setCustomCategory('');
       setAmount('');
       setDescription('');
       setDateStr(new Date().toISOString().split('T')[0]);
@@ -55,6 +57,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setCategory(tab === 'income' ? 'Salary' : 'Shopping');
+    setCustomCategory('');
   };
 
   const processSelectedFile = (file) => {
@@ -170,19 +173,28 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
       const [year, month, day] = dateStr.split('-').map(Number);
       const transactionDate = new Date(year, month - 1, day, 12, 0, 0);
 
-      const isExpense = activeTab === 'expense';
-      const finalAmount = isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount);
+    const isExpense = activeTab === 'expense';
+    const finalAmount = isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount);
 
-      const transactionData = {
-        userId: user.uid,
-        amount: finalAmount,
-        type: activeTab,
-        category: category.trim(),
-        description: description.trim() || category.trim(),
-        receiptUrl: finalReceiptUrl || null,
-        date: Timestamp.fromDate(transactionDate),
-        createdAt: serverTimestamp(),
-      };
+    if (category === 'Other' && !customCategory.trim()) {
+      setErrorMessage('Please specify your custom category.');
+      return;
+    }
+
+    const finalCategory = (category === 'Other' && customCategory.trim()) 
+      ? customCategory.trim() 
+      : category.trim();
+
+    const transactionData = {
+      userId: user.uid,
+      amount: finalAmount,
+      type: activeTab,
+      category: finalCategory,
+      description: description.trim() || finalCategory,
+      receiptUrl: finalReceiptUrl || null,
+      date: Timestamp.fromDate(transactionDate),
+      createdAt: serverTimestamp(),
+    };
 
       await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
 
@@ -210,7 +222,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
       />
 
       {/* Modal Drawer */}
-      <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col p-6 sm:p-8 overflow-y-auto z-10 animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto z-10 animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between pb-5 border-b border-gray-100 mb-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">
@@ -298,7 +310,12 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
               </div>
               <select 
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  if (e.target.value !== 'Other') {
+                    setCustomCategory('');
+                  }
+                }}
                 className="w-full appearance-none pl-11 pr-10 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
               >
                 {currentCategories.map(cat => (
@@ -307,6 +324,25 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
               </select>
               <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
+
+            {/* Custom Category Input if "Other" is selected */}
+            {category === 'Other' && (
+              <div className="pt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="text-[11px] font-bold text-brand-primary uppercase tracking-wider flex items-center justify-between">
+                  <span>Custom Category Name</span>
+                  <span className="text-[10px] text-gray-400 font-normal lowercase">(where did you spend/earn?)</span>
+                </label>
+                <input 
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g. Gym, Books, Electronics, Pet Food..."
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-blue-50/50 border border-blue-200 rounded-xl text-sm font-semibold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all placeholder:text-gray-400"
+                />
+              </div>
+            )}
           </div>
 
           {/* Description */}

@@ -314,7 +314,7 @@ const Dashboard = () => {
         </div>
         <Button 
           icon={Plus} 
-          className="rounded-xl shadow-md shadow-blue-100 text-xs sm:text-sm font-bold"
+          className="w-full sm:w-auto rounded-xl shadow-md shadow-blue-100 text-xs sm:text-sm font-bold"
           onClick={() => setIsModalOpen(true)}
         >
           Add Transaction
@@ -329,7 +329,7 @@ const Dashboard = () => {
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Net Balance */}
-        <Card className="p-5 hover:border-blue-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-blue-200 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-blue-50 text-brand-primary rounded-xl flex items-center justify-center">
               <CreditCard size={20} />
@@ -346,7 +346,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Monthly Income */}
-        <Card className="p-5 hover:border-green-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-green-200 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
               <TrendingUp size={20} />
@@ -363,7 +363,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Monthly Expenses */}
-        <Card className="p-5 hover:border-red-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-red-200 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-red-50 text-danger rounded-xl flex items-center justify-center">
               <TrendingDown size={20} />
@@ -380,7 +380,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Savings Rate */}
-        <Card className="p-5 hover:border-purple-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-purple-200 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
               <PiggyBank size={20} />
@@ -398,7 +398,7 @@ const Dashboard = () => {
       </div>
 
       {/* Cashflow & Spending Trend Chart */}
-      <Card className="p-5 sm:p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h3 className="text-lg font-bold text-gray-900 leading-tight">Cashflow Trends</h3>
@@ -406,13 +406,13 @@ const Dashboard = () => {
           </div>
 
           {/* Timeframe Filter Buttons */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-xl self-start sm:self-auto">
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl w-full sm:w-auto overflow-x-auto justify-between sm:justify-start">
             {['7D', '30D', '90D', '6M', '1Y'].map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={twMerge(
-                  "px-3 py-1.5 text-xs font-bold rounded-lg transition-all",
+                  "flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-center whitespace-nowrap",
                   timeframe === tf 
                     ? "bg-white text-gray-900 shadow-sm" 
                     : "text-gray-500 hover:text-gray-800"
@@ -568,14 +568,14 @@ const Dashboard = () => {
 
       {/* Receipt Preview Modal */}
       {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
           <div 
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
             onClick={() => setSelectedReceipt(null)}
           />
-          <div className="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+          <div className="relative bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl z-10 animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-gray-100 mb-3 sm:mb-4 shrink-0">
+              <h3 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2">
                 <FileText size={18} className="text-brand-primary" />
                 Receipt Preview
               </h3>
@@ -587,19 +587,19 @@ const Dashboard = () => {
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-auto rounded-2xl bg-gray-50 p-2 flex items-center justify-center">
+            <div className="flex-1 overflow-auto rounded-2xl bg-gray-50 p-2 flex items-center justify-center min-h-[160px] max-h-[55vh]">
               <img 
                 src={selectedReceipt} 
                 alt="Receipt Document" 
-                className="max-w-full max-h-[55vh] object-contain rounded-xl" 
+                className="max-w-full max-h-[50vh] object-contain rounded-xl shadow-sm" 
               />
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-3">
+            <div className="pt-3 sm:pt-4 flex flex-wrap items-center justify-end gap-2 sm:gap-3 shrink-0">
               <a 
                 href={selectedReceipt} 
                 download="spendwise_receipt.jpg"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
               >
                 <Download size={14} />
                 Download
@@ -608,7 +608,7 @@ const Dashboard = () => {
                 href={selectedReceipt} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-brand-primary hover:bg-blue-50 rounded-xl transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-brand-primary hover:bg-blue-50 rounded-xl transition-colors"
               >
                 <ExternalLink size={14} />
                 Full Size
@@ -616,7 +616,7 @@ const Dashboard = () => {
               <Button 
                 onClick={() => setSelectedReceipt(null)}
                 size="sm"
-                className="rounded-xl px-5 text-xs font-bold"
+                className="rounded-xl px-4 py-2 text-xs font-bold"
               >
                 Close
               </Button>

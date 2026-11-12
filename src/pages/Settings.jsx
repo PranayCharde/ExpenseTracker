@@ -20,6 +20,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import { twMerge } from 'tailwind-merge';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
@@ -46,15 +47,16 @@ const TIMEZONE_OPTIONS = [
 
 const Settings = () => {
   const { user, logout, resetPassword, changePassword } = useAuth();
+  const { settings, updateDarkMode } = useSettings();
   
   // Tab state: 'profile', 'security', 'preferences', 'notifications'
   const [activeTab, setActiveTab] = useState('profile');
 
   // Form states
   const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [currency, setCurrency] = useState('INR');
-  const [timezone, setTimezone] = useState('GMT+5:30');
-  const [darkMode, setDarkMode] = useState(false);
+  const [currency, setCurrency] = useState(settings?.currency || 'INR');
+  const [timezone, setTimezone] = useState(settings?.timezone || 'GMT+5:30');
+  const [darkMode, setDarkMode] = useState(settings?.darkMode || false);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(true);
 
@@ -186,7 +188,7 @@ const Settings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         {/* Navigation Tabs */}
-        <div className="lg:col-span-3 space-y-1.5 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="lg:col-span-3 flex lg:flex-col overflow-x-auto gap-1.5 bg-white p-2 sm:p-3 rounded-2xl border border-gray-100 shadow-sm">
           {[
             { id: 'profile', label: 'Profile Information', icon: User },
             { id: 'preferences', label: 'Currency & Display', icon: SettingsIcon },
@@ -203,7 +205,7 @@ const Settings = () => {
                   setMessage({ type: '', text: '' });
                 }}
                 className={twMerge(
-                  "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all text-xs sm:text-sm font-bold text-left",
+                  "whitespace-nowrap shrink-0 lg:shrink lg:w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 rounded-xl transition-all text-xs sm:text-sm font-bold text-left",
                   active 
                     ? "bg-brand-primary text-white shadow-md shadow-blue-100" 
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -215,11 +217,11 @@ const Settings = () => {
             );
           })}
 
-          <div className="h-px bg-gray-100 my-2" />
+          <div className="hidden lg:block h-px bg-gray-100 my-2" />
 
           <button 
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-danger hover:bg-red-50 text-xs sm:text-sm font-bold transition-all text-left"
+            className="whitespace-nowrap shrink-0 lg:shrink lg:w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-2.5 sm:py-3 rounded-xl text-danger hover:bg-red-50 text-xs sm:text-sm font-bold transition-all text-left"
           >
             <LogOut size={18} />
             <span>Sign Out</span>
@@ -333,7 +335,11 @@ const Settings = () => {
                   </div>
                   <button 
                     type="button"
-                    onClick={() => setDarkMode(!darkMode)}
+                    onClick={() => {
+                      const nextVal = !darkMode;
+                      setDarkMode(nextVal);
+                      updateDarkMode(nextVal);
+                    }}
                     className={twMerge(
                       "w-12 h-6.5 rounded-full transition-colors relative focus:outline-none p-1",
                       darkMode ? "bg-brand-primary" : "bg-gray-200"

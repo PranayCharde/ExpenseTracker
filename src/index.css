@@ -35,6 +35,11 @@
   --color-border: #334155;
 }
 
+/* Ensure text-white stays pure white on colored buttons and badges */
+.text-white, button.bg-brand-primary, .btn-primary {
+  color: #ffffff;
+}
+
 @layer base {
   body {
     @apply bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] font-sans antialiased;

@@ -15,12 +15,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
-  const { settings } = useSettings();
+  const { settings, toggleDarkMode } = useSettings();
   const navigate = useNavigate();
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -48,17 +46,6 @@ const Navbar = ({ onToggleSidebar }) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/transactions?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
-  const handleToggleTheme = async () => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        darkMode: !settings.darkMode
-      });
-    } catch (err) {
-      console.error("Failed to update theme mode", err);
     }
   };
 
@@ -105,7 +92,7 @@ const Navbar = ({ onToggleSidebar }) => {
       <div className="flex items-center gap-2 sm:gap-4 ml-3">
         {/* Dark Mode Quick Toggle */}
         <button
-          onClick={handleToggleTheme}
+          onClick={toggleDarkMode}
           title={settings.darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           className="p-2 sm:p-2.5 text-gray-500 hover:bg-gray-50 hover:text-brand-primary rounded-xl transition-colors"
         >
@@ -124,7 +111,7 @@ const Navbar = ({ onToggleSidebar }) => {
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-88 max-w-sm bg-white rounded-2xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
                 <h4 className="text-sm font-bold text-gray-900">Notifications</h4>
                 <span className="text-[10px] font-bold bg-blue-50 text-brand-primary px-2 py-0.5 rounded-full uppercase">Recent</span>
@@ -178,7 +165,7 @@ const Navbar = ({ onToggleSidebar }) => {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-56 max-w-xs bg-white rounded-2xl shadow-xl border border-gray-100 p-2 z-50 animate-in fade-in zoom-in-95 duration-200">
               <div className="p-3 border-b border-gray-100 md:hidden">
                 <p className="text-xs font-bold text-gray-900">{userDisplayName}</p>
                 <p className="text-[11px] text-gray-400 truncate">{user?.email}</p>

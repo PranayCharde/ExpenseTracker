@@ -245,7 +245,7 @@ const Reports = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
           {/* Period selector */}
           <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
             {[
@@ -257,7 +257,7 @@ const Reports = () => {
               <button
                 key={p.key}
                 onClick={() => setReportPeriod(p.key)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                   reportPeriod === p.key ? 'bg-brand-primary text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
@@ -269,7 +269,7 @@ const Reports = () => {
           <Button 
             onClick={handleExportCSV} 
             icon={Download} 
-            className="rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-blue-100"
+            className="rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-blue-100 whitespace-nowrap"
           >
             Export Report
           </Button>
@@ -426,8 +426,8 @@ const Reports = () => {
             <p className="text-xs text-gray-400 font-medium">Breakdown of all categories spent during this period</p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left min-w-[460px] sm:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                   <th className="py-3 px-4">Category</th>
