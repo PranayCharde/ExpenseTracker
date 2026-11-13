@@ -11,7 +11,11 @@ import {
   Eye,
   Camera,
   CheckCircle2,
-  Edit3
+  Edit3,
+  Banknote,
+  Smartphone,
+  CreditCard,
+  Building2
 } from 'lucide-react';
 import Button from '../common/Button';
 import { twMerge } from 'tailwind-merge';
@@ -19,7 +23,7 @@ import { db, auth, storage } from '../../firebase';
 import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useCurrency } from '../../hooks/useCurrency';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../utils/constants';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '../../utils/constants';
 import { compressReceiptImage } from '../../utils/receiptHelper';
 import { format } from 'date-fns';
 
@@ -31,6 +35,7 @@ const EditTransactionModal = ({ isOpen, onClose, transaction, onTransactionUpdat
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Shopping');
   const [customCategory, setCustomCategory] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Online / UPI');
   const [description, setDescription] = useState('');
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
   
@@ -52,6 +57,7 @@ const EditTransactionModal = ({ isOpen, onClose, transaction, onTransactionUpdat
       setActiveTab(tab);
       setAmount(Math.abs(transaction.amount).toString());
       setDescription(transaction.description || '');
+      setPaymentMethod(transaction.paymentMethod || 'Online / UPI');
 
       // Parse date
       let parsedDate = new Date();
@@ -206,6 +212,7 @@ const EditTransactionModal = ({ isOpen, onClose, transaction, onTransactionUpdat
         amount: finalAmount,
         type: activeTab,
         category: finalCategory,
+        paymentMethod: paymentMethod || 'Online / UPI',
         description: description.trim() || finalCategory,
         receiptUrl: finalReceiptUrl,
         date: Timestamp.fromDate(transactionDate),
@@ -364,6 +371,43 @@ const EditTransactionModal = ({ isOpen, onClose, transaction, onTransactionUpdat
                 />
               </div>
             )}
+          </div>
+
+          {/* Payment Method Selector (Cash vs Online) */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+              <span>Payment Mode</span>
+              <span className="text-[10px] text-brand-primary font-bold">
+                {paymentMethod === 'Cash' ? '💵 Cash Expense' : '⚡ Digital / Online'}
+              </span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: 'Online / UPI', label: 'Online / UPI', icon: Smartphone, color: 'text-blue-500' },
+                { id: 'Cash', label: 'Cash', icon: Banknote, color: 'text-emerald-500' },
+                { id: 'Card', label: 'Card', icon: CreditCard, color: 'text-purple-500' },
+                { id: 'Net Banking', label: 'Net Banking', icon: Building2, color: 'text-amber-500' }
+              ].map((method) => {
+                const IconComponent = method.icon;
+                const isSelected = paymentMethod === method.id;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.id)}
+                    className={twMerge(
+                      "flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold border transition-all",
+                      isSelected
+                        ? "bg-brand-primary text-white border-brand-primary shadow-sm ring-2 ring-blue-100"
+                        : "bg-gray-50 text-gray-700 border-gray-100 hover:bg-gray-100/80 hover:border-gray-200"
+                    )}
+                  >
+                    <IconComponent size={14} className={isSelected ? 'text-white' : method.color} />
+                    <span className="truncate">{method.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Description */}

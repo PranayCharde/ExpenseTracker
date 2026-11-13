@@ -23,3 +23,10 @@ export const INCOME_CATEGORIES = [
   'Other'
 ];
 
+export const PAYMENT_METHODS = [
+  'Online / UPI',
+  'Cash',
+  'Card',
+  'Net Banking'
+];
+

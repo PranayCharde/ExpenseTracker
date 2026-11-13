@@ -20,7 +20,10 @@ import {
   FileText,
   CheckCircle2,
   Tag,
-  Edit3
+  Edit3,
+  Banknote,
+  Smartphone,
+  Building2
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -48,6 +51,7 @@ const Transactions = () => {
   const urlSearch = searchParams.get('search') || '';
   const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all', 'income', 'expense'
   const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc', 'date-asc', 'amount-desc', 'amount-asc'
 
@@ -137,9 +141,12 @@ const Transactions = () => {
            tx.category?.toLowerCase().includes(searchTerm.toLowerCase()))
         : true;
       const matchCategory = filterCategory ? tx.category === filterCategory : true;
+      const matchPaymentMethod = filterPaymentMethod 
+        ? (tx.paymentMethod || 'Online / UPI') === filterPaymentMethod 
+        : true;
       const matchType = filterType === 'all' ? true : 
                         filterType === 'income' ? tx.amount > 0 : tx.amount < 0;
-      return matchSearch && matchCategory && matchType;
+      return matchSearch && matchCategory && matchPaymentMethod && matchType;
     }).sort((a, b) => {
       if (sortBy === 'date-desc') return b.parsedDate - a.parsedDate;
       if (sortBy === 'date-asc') return a.parsedDate - b.parsedDate;
@@ -147,7 +154,7 @@ const Transactions = () => {
       if (sortBy === 'amount-asc') return Math.abs(a.amount) - Math.abs(b.amount);
       return 0;
     });
-  }, [transactions, searchTerm, filterCategory, filterType, sortBy]);
+  }, [transactions, searchTerm, filterCategory, filterPaymentMethod, filterType, sortBy]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1;
   const paginatedTransactions = filteredTransactions.slice(
@@ -171,11 +178,12 @@ const Transactions = () => {
       return;
     }
 
-    const headers = ['Date', 'Description', 'Category', 'Type', 'Amount', 'Currency'];
+    const headers = ['Date', 'Description', 'Category', 'Payment Mode', 'Type', 'Amount', 'Currency'];
     const rows = filteredTransactions.map(tx => [
       format(tx.parsedDate, 'yyyy-MM-dd'),
       `"${(tx.description || tx.category).replace(/"/g, '""')}"`,
       `"${tx.category.replace(/"/g, '""')}"`,
+      `"${(tx.paymentMethod || 'Online / UPI').replace(/"/g, '""')}"`,
       tx.amount > 0 ? 'Income' : 'Expense',
       Math.abs(tx.amount).toFixed(2),
       CURRENCY_SYMBOL
@@ -341,6 +349,22 @@ const Transactions = () => {
                 ))}
               </select>
 
+              {/* Payment Method Filter */}
+              <select 
+                value={filterPaymentMethod} 
+                onChange={(e) => {
+                  setFilterPaymentMethod(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full sm:w-auto bg-gray-50 border border-gray-200 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand-primary outline-none"
+              >
+                <option value="">All Payment Modes</option>
+                <option value="Online / UPI">⚡ Online / UPI</option>
+                <option value="Cash">💵 Cash</option>
+                <option value="Card">💳 Card</option>
+                <option value="Net Banking">🏦 Net Banking</option>
+              </select>
+
               {/* Sort Dropdown */}
               <select 
                 value={sortBy} 
@@ -447,6 +471,25 @@ const Transactions = () => {
                                 </span>
                               )}
                             </p>
+                            <div className="mt-1 flex items-center gap-1.5">
+                              {tx.paymentMethod === 'Cash' ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                                  <Banknote size={11} /> Cash
+                                </span>
+                              ) : tx.paymentMethod === 'Card' ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/60">
+                                  <PaymentIcon size={11} /> Card
+                                </span>
+                              ) : tx.paymentMethod === 'Net Banking' ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                                  <Building2 size={11} /> Net Banking
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                                  <Smartphone size={11} /> Online / UPI
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -598,12 +641,29 @@ const Transactions = () => {
                   </div>
 
                   <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <Badge variant={tx.amount > 0 ? 'success' : 'info'} className="text-[10px]">
                         {tx.category}
                       </Badge>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      {tx.paymentMethod === 'Cash' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                          <Banknote size={11} /> Cash
+                        </span>
+                      ) : tx.paymentMethod === 'Card' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/60">
+                          <PaymentIcon size={11} /> Card
+                        </span>
+                      ) : tx.paymentMethod === 'Net Banking' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                          <Building2 size={11} /> Net Banking
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                          <Smartphone size={11} /> Online
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                        <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
                         Completed
                       </span>
                     </div>
@@ -873,10 +933,30 @@ const Transactions = () => {
 
               <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Payment Method
+                  Payment Mode
                 </span>
-                <p className="font-bold text-gray-800">
-                  Online / Direct
+                <p className="font-bold text-gray-800 flex items-center gap-1.5">
+                  {selectedDetailTx.paymentMethod === 'Cash' ? (
+                    <>
+                      <Banknote size={15} className="text-emerald-600" />
+                      <span>Cash Payment</span>
+                    </>
+                  ) : selectedDetailTx.paymentMethod === 'Card' ? (
+                    <>
+                      <PaymentIcon size={15} className="text-purple-600" />
+                      <span>Card Payment</span>
+                    </>
+                  ) : selectedDetailTx.paymentMethod === 'Net Banking' ? (
+                    <>
+                      <Building2 size={15} className="text-amber-600" />
+                      <span>Net Banking</span>
+                    </>
+                  ) : (
+                    <>
+                      <Smartphone size={15} className="text-blue-600" />
+                      <span>Online / UPI</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>

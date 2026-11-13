@@ -473,8 +473,19 @@ const Dashboard = () => {
                         <p className="text-sm font-bold text-gray-900 leading-tight">
                           {tx.description || tx.category}
                         </p>
-                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">
-                          {tx.dateStr} • <span className="font-semibold text-gray-600">{tx.category}</span>
+                        <p className="text-[10px] text-gray-400 font-medium mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <span>{tx.dateStr}</span>
+                          <span>•</span>
+                          <span className="font-semibold text-gray-600">{tx.category}</span>
+                          <span>•</span>
+                          <span className={twMerge(
+                            "px-1.5 py-0.5 rounded font-bold text-[9px] border",
+                            tx.paymentMethod === 'Cash' 
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" 
+                              : "bg-blue-50 text-blue-700 border-blue-200/60"
+                          )}>
+                            {tx.paymentMethod === 'Cash' ? '💵 Cash' : '⚡ Online'}
+                          </span>
                         </p>
                         {tx.receiptUrl && (
                           <button
