@@ -25,7 +25,13 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '../../utils/constants';
 import { compressReceiptImage } from '../../utils/receiptHelper';
 
-const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTransactionAdded }) => {
+const NewTransactionModal = ({ 
+  isOpen, 
+  onClose, 
+  defaultType = 'expense', 
+  defaultPaymentMethod = 'Online / UPI', 
+  onTransactionAdded 
+}) => {
   const { symbol: CURRENCY_SYMBOL } = useCurrency();
   const fileInputRef = useRef(null);
 
@@ -33,7 +39,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(defaultType === 'income' ? 'Salary' : 'Shopping');
   const [customCategory, setCustomCategory] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('Online / UPI');
+  const [paymentMethod, setPaymentMethod] = useState(defaultPaymentMethod);
   const [description, setDescription] = useState('');
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
   const [receiptFile, setReceiptFile] = useState(null);
@@ -48,7 +54,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
       setActiveTab(defaultType);
       setCategory(defaultType === 'income' ? 'Salary' : 'Shopping');
       setCustomCategory('');
-      setPaymentMethod('Online / UPI');
+      setPaymentMethod(defaultPaymentMethod);
       setAmount('');
       setDescription('');
       setDateStr(new Date().toISOString().split('T')[0]);
@@ -58,7 +64,7 @@ const NewTransactionModal = ({ isOpen, onClose, defaultType = 'expense', onTrans
       setErrorMessage('');
       setUploadStatus('');
     }
-  }, [isOpen, defaultType]);
+  }, [isOpen, defaultType, defaultPaymentMethod]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

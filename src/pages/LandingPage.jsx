@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import Button from '../components/common/Button';
+import Logo from '../components/common/Logo';
 import { useAuth } from '../context/AuthContext';
 
 const LandingPage = () => {
@@ -26,12 +27,7 @@ const LandingPage = () => {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-gray-100 px-4 sm:px-8 py-4 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-brand-primary rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-200 ring-4 ring-blue-50">
-              <Wallet size={20} />
-            </div>
-            <span className="text-xl font-extrabold text-gray-900 tracking-tight">SpendWise</span>
-          </Link>
+          <Logo size="md" to="/" showText={true} />
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-600">
@@ -284,12 +280,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="mt-auto py-12 px-4 sm:px-8 border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-400">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-brand-primary rounded-lg flex items-center justify-center text-white">
-              <Wallet size={16} />
-            </div>
-            <span className="font-extrabold text-gray-900 text-sm">SpendWise</span>
-          </div>
+          <Logo size="sm" to="/" showText={true} />
 
           <div className="flex items-center gap-6 font-semibold">
             <Link to="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>

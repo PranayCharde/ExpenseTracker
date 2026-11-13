@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { useNavigate } from 'react-router-dom';
+import Logo from '../common/Logo';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -67,11 +68,13 @@ const Navbar = ({ onToggleSidebar }) => {
       <div className="flex items-center gap-3 sm:gap-4 flex-1 max-w-xl">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+          className="lg:hidden p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors shrink-0"
           aria-label="Open sidebar"
         >
           <Menu size={22} />
         </button>
+
+        <Logo size="sm" showText={false} to="/dashboard" className="lg:hidden shrink-0" />
 
         <form onSubmit={handleSearchSubmit} className="relative w-full group">
           <Search 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Wallet, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
+import Logo from '../components/common/Logo';
 
 const SignupPage = () => {
   const [name, setName] = useState('');
@@ -61,9 +62,9 @@ const SignupPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50/70 p-4 font-sans">
       <div className="max-w-md w-full animate-in fade-in duration-500">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center justify-center w-14 h-14 bg-brand-primary rounded-2xl text-white shadow-xl shadow-blue-100 ring-8 ring-blue-50 mb-4 hover:scale-105 transition-transform">
-            <Wallet size={28} />
-          </Link>
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" to="/" showText={false} />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Create Account</h1>
           <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">Start tracking your personal finances today</p>
         </div>

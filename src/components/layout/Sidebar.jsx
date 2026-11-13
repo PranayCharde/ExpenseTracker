@@ -9,10 +9,12 @@ import {
   LogOut,
   X,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Banknote
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { useAuth } from '../../context/AuthContext';
+import Logo from '../common/Logo';
 
 const SidebarItem = ({ icon: Icon, label, to, badge, onClick }) => (
   <NavLink
@@ -59,16 +61,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
     >
       {/* Brand & Mobile Close Button */}
-      <div className="flex items-center justify-between px-2 py-4 mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 ring-4 ring-blue-50">
-            <Wallet size={22} />
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-gray-900 leading-tight">SpendWise</h1>
-            <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Smart Finance</p>
-          </div>
-        </div>
+      <div className="flex items-center justify-between px-2 py-3 mb-4">
+        <Logo size="md" to="/dashboard" />
 
         {/* Close Button on Mobile */}
         <button 
@@ -84,6 +78,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <nav className="flex-1 space-y-1 overflow-y-auto pt-2">
         <SidebarItem icon={LayoutDashboard} label="Dashboard" to="/dashboard" onClick={onClose} />
         <SidebarItem icon={Receipt} label="Transactions" to="/transactions" onClick={onClose} />
+        <SidebarItem icon={Banknote} label="Cash in Hand" to="/cash" onClick={onClose} />
         <SidebarItem icon={Wallet} label="Budgets" to="/budgets" onClick={onClose} />
         <SidebarItem icon={PieChart} label="Reports" to="/reports" onClick={onClose} />
         <SidebarItem icon={Settings} label="Settings" to="/settings" onClick={onClose} />
