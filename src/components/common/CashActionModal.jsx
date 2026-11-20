@@ -25,6 +25,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../hooks/useCurrency';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../utils/constants';
 import { compressReceiptImage } from '../../utils/receiptHelper';
+import { uploadReceiptToCloudinary } from '../../services/cloudinaryService';
 
 const CASH_EXPENSE_CATEGORIES = [
   'Food',
@@ -243,12 +244,13 @@ const CashActionModal = ({
           if (receiptFile.type.startsWith('image/')) {
             fileToUpload = await compressReceiptImage(receiptFile);
           }
-          const safeName = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-          const fileRef = ref(storage, `users/${user.uid}/receipts/${Date.now()}_${safeName}`);
-          const snap = await uploadBytes(fileRef, fileToUpload);
-          receiptUrl = await getDownloadURL(snap.ref);
+          const cloudRes = await uploadReceiptToCloudinary(fileToUpload);
+          if (cloudRes.success && cloudRes.url) {
+            receiptUrl = cloudRes.url;
+            console.log('[CashAction] Stored receipt in Cloudinary:', receiptUrl);
+          }
         } catch (uploadErr) {
-          console.error("Receipt upload error:", uploadErr);
+          console.warn("[CashAction] Cloudinary upload notice:", uploadErr);
         }
       }
 

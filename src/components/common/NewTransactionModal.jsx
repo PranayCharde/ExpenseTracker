@@ -16,7 +16,9 @@ import {
   RotateCcw,
   Smartphone,
   CreditCard,
-  Building2
+  Building2,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import Button from '../common/Button';
 import { twMerge } from 'tailwind-merge';
@@ -25,7 +27,9 @@ import { collection, addDoc, doc, getDoc, setDoc, serverTimestamp, Timestamp } f
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useCurrency } from '../../hooks/useCurrency';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '../../utils/constants';
-import { compressReceiptImage } from '../../utils/receiptHelper';
+import { compressReceiptImage, compressReceiptToBlob } from '../../utils/receiptHelper';
+import { scanWebReceipt, warmupReceiptScanner } from '../../utils/receiptScannerService';
+import { uploadReceiptToCloudinary } from '../../services/cloudinaryService';
 
 const DENOMINATION_NOTES = [
   { value: 500, label: '₹500', color: 'bg-stone-50 border-stone-200 text-stone-800' },
@@ -55,6 +59,9 @@ const NewTransactionModal = ({
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(null);
+  const [scanningReceipt, setScanningReceipt] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [receiptScanResult, setReceiptScanResult] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
@@ -76,6 +83,7 @@ const NewTransactionModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      warmupReceiptScanner();
       setActiveTab(defaultType);
       setCategory(defaultType === 'income' ? 'Salary' : 'Shopping');
       setCustomCategory('');
@@ -95,6 +103,9 @@ const NewTransactionModal = ({
       setDateStr(new Date().toISOString().split('T')[0]);
       setReceiptFile(null);
       setReceiptPreview(null);
+      setReceiptScanResult(null);
+      setScanningReceipt(false);
+      setScanProgress(0);
       setIsDragging(false);
       setErrorMessage('');
       setUploadStatus('');
@@ -224,7 +235,7 @@ const NewTransactionModal = ({
     return walletBalance + parsed;
   }, [activeTab, walletBalance, amount]);
 
-  const processSelectedFile = (file) => {
+  const processSelectedFile = async (file) => {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
@@ -234,6 +245,7 @@ const NewTransactionModal = ({
 
     setReceiptFile(file);
     setErrorMessage('');
+    setReceiptScanResult(null);
 
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -243,6 +255,47 @@ const NewTransactionModal = ({
       reader.readAsDataURL(file);
     } else {
       setReceiptPreview(null);
+    }
+
+    // AI OCR Scan & Auto-Fill
+    setScanningReceipt(true);
+    setScanProgress(0);
+    try {
+      const scanRes = await scanWebReceipt(file, (p) => setScanProgress(p));
+      if (scanRes.success && scanRes.data) {
+        const d = scanRes.data;
+        if (d.amount) {
+          setAmount(d.amount.toString());
+          setCashInputMode('direct');
+        }
+        if (d.merchant) {
+          setDescription(d.merchant);
+        }
+        if (d.category) {
+          const allCats = activeTab === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+          if (allCats.includes(d.category)) {
+            setCategory(d.category);
+            setCustomCategory('');
+          }
+        }
+        if (d.date) {
+          setDateStr(d.date);
+        }
+        if (d.paymentMethod) {
+          setPaymentMethod(d.paymentMethod);
+        }
+
+        setReceiptScanResult({
+          amount: d.amount,
+          merchant: d.merchant,
+          category: d.category,
+          date: d.date
+        });
+      }
+    } catch (scanErr) {
+      console.warn("Web receipt scan warning:", scanErr);
+    } finally {
+      setScanningReceipt(false);
     }
   };
 
@@ -272,6 +325,8 @@ const NewTransactionModal = ({
   const handleRemoveReceipt = () => {
     setReceiptFile(null);
     setReceiptPreview(null);
+    setReceiptScanResult(null);
+    setScanningReceipt(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -305,28 +360,35 @@ const NewTransactionModal = ({
       let finalReceiptUrl = null;
 
       if (receiptFile) {
-        setUploadStatus('Processing receipt...');
+        setUploadStatus('Optimizing receipt...');
 
-        // 1. Prepare compressed Base64 data URL as high-reliability guarantee
+        // 1. Prepare ultra-lightweight compressed image (<120 KB)
         let base64Fallback = null;
+        let blobToUpload = null;
         try {
-          base64Fallback = await compressReceiptImage(receiptFile, 1200, 0.8);
+          [base64Fallback, blobToUpload] = await Promise.all([
+            compressReceiptImage(receiptFile, 1000, 0.75),
+            compressReceiptToBlob(receiptFile, 1000, 0.75)
+          ]);
         } catch (compErr) {
-          console.warn("Compression warning, using direct preview", compErr);
+          console.warn("Compression warning, using fallback", compErr);
           base64Fallback = receiptPreview;
+          blobToUpload = receiptFile;
         }
 
-        // 2. Try Firebase Cloud Storage first
-        setUploadStatus('Uploading receipt to cloud...');
+        // 2. Upload receipt image to Cloudinary
+        setUploadStatus('Uploading receipt to Cloudinary...');
         try {
-          const safeName = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-          const fileRef = ref(storage, `receipts/${user.uid}/${Date.now()}_${safeName}`);
-          const snapshot = await uploadBytes(fileRef, receiptFile);
-          finalReceiptUrl = await getDownloadURL(snapshot.ref);
-          console.log("Uploaded receipt to Firebase Storage:", finalReceiptUrl);
-        } catch (storageErr) {
-          console.warn("Cloud Storage error; using local/base64 backup to ensure receipt is saved:", storageErr);
-          // Automatic seamless fallback to compressed base64 data url
+          const cloudRes = await uploadReceiptToCloudinary(blobToUpload || receiptFile);
+          if (cloudRes.success && cloudRes.url) {
+            finalReceiptUrl = cloudRes.url;
+            console.log('[NewTx] Stored receipt in Cloudinary:', finalReceiptUrl);
+          } else {
+            console.warn('[NewTx] Cloudinary notice, using backup:', cloudRes.error);
+            finalReceiptUrl = base64Fallback;
+          }
+        } catch (cloudErr) {
+          console.warn("[NewTx] Cloudinary notice; using backup:", cloudErr);
           finalReceiptUrl = base64Fallback;
         }
       }
@@ -774,12 +836,45 @@ const NewTransactionModal = ({
                 <ImageIcon size={15} className="text-brand-primary" />
                 Receipt / Invoice (Optional)
               </label>
-              {receiptFile && (
-                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Ready to save
-                </span>
-              )}
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles size={11} /> AI Auto-Read
+              </span>
             </div>
+
+            {/* AI Scanning Status */}
+            {scanningReceipt && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3 text-xs font-bold text-emerald-800">
+                <div className="flex items-center gap-2.5 truncate">
+                  <Loader2 size={16} className="animate-spin text-emerald-600 shrink-0" />
+                  <span className="truncate">
+                    AI Reading receipt & extracting data... {scanProgress > 0 ? `(${scanProgress}%)` : ''}
+                  </span>
+                </div>
+                {scanProgress > 0 && (
+                  <div className="w-20 bg-emerald-200/70 rounded-full h-1.5 overflow-hidden shrink-0">
+                    <div 
+                      className="bg-emerald-600 h-1.5 rounded-full transition-all duration-200" 
+                      style={{ width: `${scanProgress}%` }} 
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AI Success Result */}
+            {receiptScanResult && !scanningReceipt && (
+              <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center justify-between gap-2 text-xs font-bold text-emerald-900 animate-in fade-in">
+                <div className="flex items-center gap-2 truncate">
+                  <Sparkles size={16} className="text-emerald-600 shrink-0" />
+                  <span className="truncate">
+                    Auto-filled: {receiptScanResult.amount ? `₹${receiptScanResult.amount}` : ''} {receiptScanResult.merchant ? `• ${receiptScanResult.merchant}` : ''} ({receiptScanResult.category})
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase font-black bg-emerald-200/80 text-emerald-800 px-2 py-0.5 rounded-md shrink-0">
+                  Auto-Read
+                </span>
+              </div>
+            )}
 
             {/* Hidden File Input */}
             <input 

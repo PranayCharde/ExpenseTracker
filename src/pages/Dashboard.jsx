@@ -17,12 +17,15 @@ import {
   ExternalLink,
   Download,
   FileText,
+  Camera,
+  Sparkles,
   X
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import NewTransactionModal from '../components/common/NewTransactionModal';
+import AutoLogReceiptModal from '../components/common/AutoLogReceiptModal';
 import { twMerge } from 'tailwind-merge';
 import { db } from '../firebase';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
@@ -59,6 +62,7 @@ const Dashboard = () => {
   const { formatCurrency, symbol: CURRENCY_SYMBOL } = useCurrency();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAutoLogModalOpen, setIsAutoLogModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]);
@@ -312,14 +316,32 @@ const Dashboard = () => {
             Welcome back, <span className="text-brand-primary font-bold">{userDisplayName}</span>! Here is your live financial snapshot.
           </p>
         </div>
-        <Button 
-          icon={Plus} 
-          className="w-full sm:w-auto rounded-xl shadow-md shadow-blue-100 text-xs sm:text-sm font-bold"
-          onClick={() => setIsModalOpen(true)}
-        >
-          Add Transaction
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setIsAutoLogOpen ? setIsAutoLogModalOpen(true) : setIsAutoLogModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl shadow-md shadow-emerald-200 text-xs sm:text-sm font-bold transition-all active:scale-[0.98]"
+          >
+            <Camera size={16} />
+            <span>Auto-Log Receipt</span>
+            <span className="bg-white/20 text-[10px] uppercase font-black px-1.5 py-0.5 rounded-md tracking-wider flex items-center gap-0.5">
+              <Sparkles size={9} /> AI
+            </span>
+          </button>
+          <Button 
+            icon={Plus} 
+            className="rounded-xl shadow-md shadow-blue-100 text-xs sm:text-sm font-bold"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add Transaction
+          </Button>
+        </div>
       </div>
+
+      <AutoLogReceiptModal
+        isOpen={isAutoLogModalOpen}
+        onClose={() => setIsAutoLogModalOpen(false)}
+      />
 
       <NewTransactionModal 
         isOpen={isModalOpen} 

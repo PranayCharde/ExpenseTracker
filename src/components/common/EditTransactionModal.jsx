@@ -25,6 +25,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useCurrency } from '../../hooks/useCurrency';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '../../utils/constants';
 import { compressReceiptImage } from '../../utils/receiptHelper';
+import { uploadReceiptToCloudinary } from '../../services/cloudinaryService';
 import { format } from 'date-fns';
 
 const EditTransactionModal = ({ isOpen, onClose, transaction, onTransactionUpdated }) => {
@@ -184,14 +185,17 @@ const EditTransactionModal = ({ isOpen, onClose, transaction, onTransactionUpdat
           base64Fallback = receiptPreview;
         }
 
-        setUploadStatus('Uploading receipt to cloud...');
+        setUploadStatus('Uploading receipt to Cloudinary...');
         try {
-          const safeName = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-          const fileRef = ref(storage, `receipts/${user.uid}/${Date.now()}_${safeName}`);
-          const snapshot = await uploadBytes(fileRef, receiptFile);
-          finalReceiptUrl = await getDownloadURL(snapshot.ref);
-        } catch (storageErr) {
-          console.warn("Cloud Storage error; using local/base64 backup to ensure receipt is saved:", storageErr);
+          const cloudRes = await uploadReceiptToCloudinary(receiptFile);
+          if (cloudRes.success && cloudRes.url) {
+            finalReceiptUrl = cloudRes.url;
+            console.log('[EditTx] Stored receipt in Cloudinary:', finalReceiptUrl);
+          } else {
+            finalReceiptUrl = base64Fallback;
+          }
+        } catch (cloudErr) {
+          console.warn("[EditTx] Cloudinary notice; using fallback:", cloudErr);
           finalReceiptUrl = base64Fallback;
         }
       }
