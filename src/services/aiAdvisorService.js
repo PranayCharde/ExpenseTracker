@@ -251,33 +251,40 @@ Guidelines:
 - Use bullet points, bold key numbers, and keep responses engaging and under 250 words.
 `;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  { text: `${systemInstruction}\n\nUser Question: ${userMessage}` }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 600
+      const models = ['gemini-3.5-flash', 'gemini-flash-latest'];
+      for (const model of models) {
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: 'user',
+                    parts: [
+                      { text: `${systemInstruction}\n\nUser Question: ${userMessage}` }
+                    ]
+                  }
+                ],
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 600
+                }
+              })
             }
-          })
-        }
-      );
+          );
 
-      if (response.ok) {
-        const data = await response.json();
-        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (aiText && aiText.trim()) {
-          return aiText;
+          if (response.ok) {
+            const data = await response.json();
+            const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (aiText && aiText.trim()) {
+              return aiText;
+            }
+          }
+        } catch (mErr) {
+          console.warn(`[AiAdvisor] ${model} attempt notice:`, mErr);
         }
       }
     } catch (apiErr) {

@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment & Secret files
+.env
+.env.backup
+.env.local
+.env.*.local
+

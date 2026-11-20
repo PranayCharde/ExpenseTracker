@@ -351,68 +351,68 @@ const Dashboard = () => {
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Net Balance */}
-        <Card className="p-4 sm:p-5 hover:border-blue-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-blue-200 dark:hover:border-blue-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
-            <div className="w-11 h-11 bg-blue-50 text-brand-primary rounded-xl flex items-center justify-center">
+            <div className="w-11 h-11 bg-blue-50 dark:bg-blue-950/60 text-brand-primary dark:text-blue-400 rounded-xl flex items-center justify-center">
               <CreditCard size={20} />
             </div>
-            <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+            <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/60 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
               Net Worth
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Balance</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-1">
             {formatCurrency(stats.totalBalance)}
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">All recorded accounts</p>
         </Card>
 
         {/* Monthly Income */}
-        <Card className="p-4 sm:p-5 hover:border-green-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-green-200 dark:hover:border-green-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
-            <div className="w-11 h-11 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+            <div className="w-11 h-11 bg-green-50 dark:bg-green-950/60 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center">
               <TrendingUp size={20} />
             </div>
-            <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+            <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/60 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
               {currentMonthLabel}
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Monthly Income</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-green-600 mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400 mt-1">
             {formatCurrency(stats.monthIncome)}
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">Earned this month</p>
         </Card>
 
         {/* Monthly Expenses */}
-        <Card className="p-4 sm:p-5 hover:border-red-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-red-200 dark:hover:border-red-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
-            <div className="w-11 h-11 bg-red-50 text-danger rounded-xl flex items-center justify-center">
+            <div className="w-11 h-11 bg-red-50 dark:bg-red-950/60 text-danger dark:text-red-400 rounded-xl flex items-center justify-center">
               <TrendingDown size={20} />
             </div>
-            <span className="text-danger bg-red-50 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+            <span className="text-danger dark:text-red-400 bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
               {currentMonthLabel}
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Monthly Spending</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-danger mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-danger dark:text-red-400 mt-1">
             {formatCurrency(stats.monthExpenses)}
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">Spent this month</p>
         </Card>
 
         {/* Savings Rate */}
-        <Card className="p-4 sm:p-5 hover:border-purple-200 transition-colors">
+        <Card className="p-4 sm:p-5 hover:border-purple-200 dark:hover:border-purple-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
-            <div className="w-11 h-11 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-11 h-11 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center">
               <PiggyBank size={20} />
             </div>
-            <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+            <span className="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider">
               Savings
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Savings Rate</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-purple-600 mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">
             {stats.savingsRate.toFixed(1)}%
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">Of monthly earnings saved</p>

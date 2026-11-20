@@ -13,13 +13,16 @@
   --color-danger: #ef4444;
   --color-info: #3b82f6;
 
-  /* Map standard tailwind colors used in the app to theme variables so dark mode is easier */
+  /* Map standard tailwind colors used in the app to theme variables so dark mode is seamless */
   --color-white: var(--color-bg-primary);
   --color-gray-50: var(--color-bg-secondary);
   --color-gray-100: var(--color-border);
   --color-gray-200: color-mix(in srgb, var(--color-border) 80%, var(--color-text-secondary));
   --color-gray-400: var(--color-text-secondary);
   --color-gray-500: color-mix(in srgb, var(--color-text-secondary) 80%, var(--color-text-primary));
+  --color-gray-600: color-mix(in srgb, var(--color-text-secondary) 50%, var(--color-text-primary));
+  --color-gray-700: var(--color-text-primary);
+  --color-gray-800: var(--color-text-primary);
   --color-gray-900: var(--color-text-primary);
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
@@ -35,9 +38,69 @@
   --color-border: #334155;
 }
 
-/* Ensure text-white stays pure white on colored buttons and badges */
-.text-white, button.bg-brand-primary, .btn-primary {
+/* Ensure text-white stays pure white on colored buttons, pills and gradients */
+.text-white, button.bg-brand-primary, .btn-primary, [class*="bg-gradient-"] {
   color: #ffffff;
+}
+
+/* Soft dark mode tints for pastel badges and icon circles across entire app */
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+}
+.dark .bg-green-50, .dark .bg-emerald-50 {
+  background-color: rgba(34, 197, 94, 0.16) !important;
+}
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.16) !important;
+}
+.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.16) !important;
+}
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+.dark .bg-cyan-50 {
+  background-color: rgba(6, 182, 212, 0.16) !important;
+}
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+}
+.dark .bg-stone-50 {
+  background-color: rgba(120, 113, 108, 0.2) !important;
+}
+
+/* High contrast text on dark mode badges */
+.dark .text-emerald-800, .dark .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+.dark .text-teal-800, .dark .text-teal-900 {
+  color: #5eead4 !important;
+}
+.dark .text-blue-800, .dark .text-blue-900 {
+  color: #93c5fd !important;
+}
+.dark .text-green-800, .dark .text-green-900 {
+  color: #86efac !important;
+}
+.dark .text-purple-800, .dark .text-purple-900 {
+  color: #d8b4fe !important;
+}
+.dark .text-amber-800, .dark .text-amber-900 {
+  color: #fde68a !important;
+}
+.dark .text-danger, .dark .text-red-800, .dark .text-red-900 {
+  color: #f87171 !important;
+}
+
+/* Absolute Scrollbar Hiding Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 @layer base {
