@@ -92,6 +92,38 @@
   color: #f87171 !important;
 }
 
+/* App-wide sleek scrollbars (prevents ugly white browser scrollbars on Windows) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+html.dark {
+  scrollbar-color: #334155 #0f172a;
+  scrollbar-width: thin;
+}
+
 /* Absolute Scrollbar Hiding Utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;

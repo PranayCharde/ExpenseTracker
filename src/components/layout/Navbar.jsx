@@ -63,12 +63,12 @@ const Navbar = ({ onToggleSidebar }) => {
   const userInitial = userDisplayName.charAt(0).toUpperCase();
 
   return (
-    <nav className="h-18 sm:h-20 bg-white/90 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-30 transition-all">
+    <nav className="h-18 sm:h-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-30 transition-all">
       {/* Left: Mobile Menu Toggle & Search Bar */}
       <div className="flex items-center gap-3 sm:gap-4 flex-1 max-w-xl">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors shrink-0"
+          className="lg:hidden p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors shrink-0"
           aria-label="Open sidebar"
         >
           <Menu size={22} />
@@ -78,7 +78,7 @@ const Navbar = ({ onToggleSidebar }) => {
 
         <form onSubmit={handleSearchSubmit} className="relative w-full group">
           <Search 
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-primary transition-colors" 
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 group-focus-within:text-brand-primary dark:group-focus-within:text-blue-400 transition-colors" 
             size={18} 
           />
           <input 
@@ -86,7 +86,7 @@ const Navbar = ({ onToggleSidebar }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search transactions, categories..." 
-            className="w-full bg-gray-50/80 border border-transparent rounded-xl py-2 pl-10 pr-4 text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-200 transition-all"
+            className="w-full bg-gray-50/80 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/60 rounded-xl py-2 pl-10 pr-4 text-xs sm:text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-200 transition-all"
           />
         </form>
       </div>
@@ -97,7 +97,7 @@ const Navbar = ({ onToggleSidebar }) => {
         <button
           onClick={toggleDarkMode}
           title={settings.darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className="p-2 sm:p-2.5 text-gray-500 hover:bg-gray-50 hover:text-brand-primary rounded-xl transition-colors"
+          className="p-2 sm:p-2.5 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-blue-400 rounded-xl transition-colors"
         >
           {settings.darkMode ? <Sun size={19} className="text-amber-500" /> : <Moon size={19} />}
         </button>
@@ -106,37 +106,37 @@ const Navbar = ({ onToggleSidebar }) => {
         <div className="relative" ref={notificationsRef}>
           <button 
             onClick={() => setNotificationsOpen(prev => !prev)}
-            className="p-2 sm:p-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl relative transition-colors"
+            className="p-2 sm:p-2.5 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white rounded-xl relative transition-colors"
             aria-label="View notifications"
           >
             <Bell size={19} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-brand-primary rounded-full ring-2 ring-white"></span>
+            <span className="absolute top-2 right-2 w-2 h-2 bg-brand-primary rounded-full ring-2 ring-white dark:ring-slate-900"></span>
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-88 max-w-sm bg-white rounded-2xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-                <h4 className="text-sm font-bold text-gray-900">Notifications</h4>
-                <span className="text-[10px] font-bold bg-blue-50 text-brand-primary px-2 py-0.5 rounded-full uppercase">Recent</span>
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-88 max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800 mb-3">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">Notifications</h4>
+                <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-950 text-brand-primary dark:text-blue-400 px-2 py-0.5 rounded-full uppercase">Recent</span>
               </div>
               <div className="space-y-3">
-                <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-950/60 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckCircle2 size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-900">Cloud Sync Active</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">Real-time sync with Google Firebase is connected.</p>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white">Cloud Sync Active</p>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">Real-time sync with Google Firebase is connected.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-brand-primary flex items-center justify-center shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-brand-primary dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
                     <Wallet size={16} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-900">Budget Tracker Ready</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">Set monthly limits to keep your expenses on target.</p>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white">Budget Tracker Ready</p>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">Set monthly limits to keep your expenses on target.</p>
                   </div>
                 </div>
               </div>
@@ -144,34 +144,34 @@ const Navbar = ({ onToggleSidebar }) => {
           )}
         </div>
 
-        <div className="h-6 w-[1px] bg-gray-200 hidden sm:block"></div>
+        <div className="h-6 w-[1px] bg-gray-200 dark:bg-slate-800 hidden sm:block"></div>
 
         {/* Profile Dropdown */}
         <div className="relative" ref={profileRef}>
           <button 
             onClick={() => setProfileOpen(prev => !prev)}
-            className="flex items-center gap-2.5 hover:bg-gray-50 p-1.5 sm:p-2 rounded-xl transition-all"
+            className="flex items-center gap-2.5 hover:bg-gray-50 dark:hover:bg-slate-800 p-1.5 sm:p-2 rounded-xl transition-all"
             aria-expanded={profileOpen}
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-primary to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-100 ring-2 ring-blue-50">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-primary to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-100 ring-2 ring-blue-50 dark:ring-slate-800">
               {userInitial}
             </div>
             <div className="text-left hidden md:block">
-              <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
+              <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight">
                 {userDisplayName}
               </h4>
-              <p className="text-[10px] text-gray-400 font-medium truncate max-w-[120px]">
+              <p className="text-[10px] text-gray-400 dark:text-slate-400 font-medium truncate max-w-[120px]">
                 {user?.email}
               </p>
             </div>
-            <ChevronDown size={14} className="text-gray-400 transition-transform duration-200 hidden sm:block" />
+            <ChevronDown size={14} className="text-gray-400 dark:text-slate-400 transition-transform duration-200 hidden sm:block" />
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-56 max-w-xs bg-white rounded-2xl shadow-xl border border-gray-100 p-2 z-50 animate-in fade-in zoom-in-95 duration-200">
-              <div className="p-3 border-b border-gray-100 md:hidden">
-                <p className="text-xs font-bold text-gray-900">{userDisplayName}</p>
-                <p className="text-[11px] text-gray-400 truncate">{user?.email}</p>
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-56 max-w-xs bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-800 p-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-3 border-b border-gray-100 dark:border-slate-800 md:hidden">
+                <p className="text-xs font-bold text-gray-900 dark:text-white">{userDisplayName}</p>
+                <p className="text-[11px] text-gray-400 dark:text-slate-400 truncate">{user?.email}</p>
               </div>
 
               <div className="py-1">
@@ -180,17 +180,17 @@ const Navbar = ({ onToggleSidebar }) => {
                     setProfileOpen(false);
                     navigate('/settings');
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
                 >
-                  <SettingsIcon size={16} className="text-gray-400" />
+                  <SettingsIcon size={16} className="text-gray-400 dark:text-slate-400" />
                   Account Settings
                 </button>
               </div>
 
-              <div className="border-t border-gray-100 pt-1">
+              <div className="border-t border-gray-100 dark:border-slate-800 pt-1">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-danger hover:bg-red-50 rounded-xl transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-danger dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors"
                 >
                   <LogOut size={16} />
                   Sign Out

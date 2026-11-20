@@ -351,7 +351,7 @@ const Dashboard = () => {
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Net Balance */}
-        <Card className="p-4 sm:p-5 hover:border-blue-200 dark:hover:border-blue-900/50 transition-colors">
+        <Card className="hover:border-blue-200 dark:hover:border-blue-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-blue-50 dark:bg-blue-950/60 text-brand-primary dark:text-blue-400 rounded-xl flex items-center justify-center">
               <CreditCard size={20} />
@@ -361,14 +361,14 @@ const Dashboard = () => {
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Balance</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-1 whitespace-nowrap">
             {formatCurrency(stats.totalBalance)}
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">All recorded accounts</p>
         </Card>
 
         {/* Monthly Income */}
-        <Card className="p-4 sm:p-5 hover:border-green-200 dark:hover:border-green-900/50 transition-colors">
+        <Card className="hover:border-green-200 dark:hover:border-green-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-green-50 dark:bg-green-950/60 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center">
               <TrendingUp size={20} />
@@ -378,14 +378,14 @@ const Dashboard = () => {
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Monthly Income</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400 mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400 mt-1 whitespace-nowrap">
             {formatCurrency(stats.monthIncome)}
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">Earned this month</p>
         </Card>
 
         {/* Monthly Expenses */}
-        <Card className="p-4 sm:p-5 hover:border-red-200 dark:hover:border-red-900/50 transition-colors">
+        <Card className="hover:border-red-200 dark:hover:border-red-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-red-50 dark:bg-red-950/60 text-danger dark:text-red-400 rounded-xl flex items-center justify-center">
               <TrendingDown size={20} />
@@ -395,14 +395,14 @@ const Dashboard = () => {
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Monthly Spending</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-danger dark:text-red-400 mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-danger dark:text-red-400 mt-1 whitespace-nowrap">
             {formatCurrency(stats.monthExpenses)}
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">Spent this month</p>
         </Card>
 
         {/* Savings Rate */}
-        <Card className="p-4 sm:p-5 hover:border-purple-200 dark:hover:border-purple-900/50 transition-colors">
+        <Card className="hover:border-purple-200 dark:hover:border-purple-900/50 transition-colors">
           <div className="flex items-start justify-between mb-3">
             <div className="w-11 h-11 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center">
               <PiggyBank size={20} />
@@ -412,7 +412,7 @@ const Dashboard = () => {
             </span>
           </div>
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Savings Rate</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 mt-1 whitespace-nowrap">
             {stats.savingsRate.toFixed(1)}%
           </h2>
           <p className="text-[11px] text-gray-400 mt-1 font-medium">Of monthly earnings saved</p>
@@ -420,15 +420,15 @@ const Dashboard = () => {
       </div>
 
       {/* Cashflow & Spending Trend Chart */}
-      <Card className="p-4 sm:p-6">
+      <Card className="hover:border-gray-200 dark:hover:border-slate-700/60 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 leading-tight">Cashflow Trends</h3>
-            <p className="text-xs text-gray-400 font-medium mt-0.5">Track your income vs expense curves over time</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Cashflow Trends</h3>
+            <p className="text-xs text-gray-400 dark:text-slate-400 font-medium mt-0.5">Track your income vs expense curves over time</p>
           </div>
 
           {/* Timeframe Filter Buttons */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-xl w-full sm:w-auto overflow-x-auto justify-between sm:justify-start">
+          <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-auto overflow-x-auto justify-between sm:justify-start border border-transparent dark:border-slate-700/60">
             {['7D', '30D', '90D', '6M', '1Y'].map((tf) => (
               <button
                 key={tf}
@@ -436,8 +436,8 @@ const Dashboard = () => {
                 className={twMerge(
                   "flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-center whitespace-nowrap",
                   timeframe === tf 
-                    ? "bg-white text-gray-900 shadow-sm" 
-                    : "text-gray-500 hover:text-gray-800"
+                    ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm" 
+                    : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white"
                 )}
               >
                 {tf}
@@ -455,15 +455,15 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Transactions List (2 Cols) */}
         <div className="lg:col-span-2">
-          <Card className="p-5 sm:p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+          <Card>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-4">
               <div>
-                <h3 className="text-base font-bold text-gray-900">Recent Transactions</h3>
-                <p className="text-xs text-gray-400 font-medium">Latest ledger entries</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Transactions</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-400 font-medium">Latest ledger entries</p>
               </div>
               <Link 
                 to="/transactions" 
-                className="text-xs font-bold text-brand-primary hover:underline inline-flex items-center gap-1"
+                className="text-xs font-bold text-brand-primary dark:text-blue-400 hover:underline inline-flex items-center gap-1"
               >
                 View All <ArrowRight size={14} />
               </Link>
@@ -471,40 +471,42 @@ const Dashboard = () => {
 
             {recentTransactions.length === 0 ? (
               <div className="py-12 text-center">
-                <Receipt className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-xs font-bold text-gray-500">No recent transactions</p>
+                <Receipt className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400">No recent transactions</p>
                 <button 
                   onClick={() => setIsModalOpen(true)}
-                  className="mt-2 text-xs font-bold text-brand-primary hover:underline"
+                  className="mt-2 text-xs font-bold text-brand-primary dark:text-blue-400 hover:underline"
                 >
                   + Add your first transaction
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-slate-800">
                 {recentTransactions.map((tx) => (
-                  <div key={tx.id} className="py-3 flex items-center justify-between hover:bg-gray-50/50 rounded-xl px-2 transition-colors">
+                  <div key={tx.id} className="py-3 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-slate-800/50 rounded-xl px-2 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={twMerge(
                         "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                        tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-danger"
+                        tx.amount > 0 
+                          ? "bg-green-50 dark:bg-green-950/60 text-green-600 dark:text-green-400" 
+                          : "bg-red-50 dark:bg-red-950/60 text-danger dark:text-red-400"
                       )}>
                         {tx.amount > 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900 leading-tight">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
                           {tx.description || tx.category}
                         </p>
-                        <p className="text-[10px] text-gray-400 font-medium mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <p className="text-[10px] text-gray-400 dark:text-slate-400 font-medium mt-0.5 flex items-center gap-1.5 flex-wrap">
                           <span>{tx.dateStr}</span>
                           <span>•</span>
-                          <span className="font-semibold text-gray-600">{tx.category}</span>
+                          <span className="font-semibold text-gray-600 dark:text-slate-300">{tx.category}</span>
                           <span>•</span>
                           <span className={twMerge(
                             "px-1.5 py-0.5 rounded font-bold text-[9px] border",
                             tx.paymentMethod === 'Cash' 
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" 
-                              : "bg-blue-50 text-blue-700 border-blue-200/60"
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60" 
+                              : "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/60"
                           )}>
                             {tx.paymentMethod === 'Cash' ? '💵 Cash' : '⚡ Online'}
                           </span>
@@ -513,7 +515,7 @@ const Dashboard = () => {
                           <button
                             type="button"
                             onClick={() => setSelectedReceipt(tx.receiptUrl)}
-                            className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-primary hover:underline mt-0.5"
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-primary dark:text-blue-400 hover:underline mt-0.5"
                           >
                             <Eye size={11} /> Receipt
                           </button>
@@ -523,7 +525,7 @@ const Dashboard = () => {
                     <div className="text-right">
                       <p className={twMerge(
                         "text-sm font-extrabold",
-                        tx.amount > 0 ? "text-green-600" : "text-danger"
+                        tx.amount > 0 ? "text-green-600 dark:text-green-400" : "text-danger dark:text-red-400"
                       )}>
                         {formatCurrency(tx.amount, { showSign: true })}
                       </p>
@@ -537,15 +539,15 @@ const Dashboard = () => {
 
         {/* Active Budgets Snapshot (1 Col) */}
         <div>
-          <Card className="p-5 sm:p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+          <Card>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-4">
               <div>
-                <h3 className="text-base font-bold text-gray-900">Active Budgets</h3>
-                <p className="text-xs text-gray-400 font-medium">{fullMonthLabel}</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Active Budgets</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-400 font-medium">{fullMonthLabel}</p>
               </div>
               <Link 
                 to="/budgets" 
-                className="text-xs font-bold text-brand-primary hover:underline inline-flex items-center gap-1"
+                className="text-xs font-bold text-brand-primary dark:text-blue-400 hover:underline inline-flex items-center gap-1"
               >
                 Manage <ArrowRight size={14} />
               </Link>
@@ -553,11 +555,11 @@ const Dashboard = () => {
 
             {topBudgets.length === 0 ? (
               <div className="py-12 text-center">
-                <Wallet className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-xs font-bold text-gray-500">No active budgets</p>
+                <Wallet className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-xs font-bold text-gray-500 dark:text-slate-400">No active budgets</p>
                 <Link 
                   to="/budgets"
-                  className="mt-2 inline-block text-xs font-bold text-brand-primary hover:underline"
+                  className="mt-2 inline-block text-xs font-bold text-brand-primary dark:text-blue-400 hover:underline"
                 >
                   Establish budget targets
                 </Link>
@@ -570,14 +572,14 @@ const Dashboard = () => {
                   const isOver = percent >= 100;
 
                   return (
-                    <div key={b.id} className="space-y-1.5 p-3 rounded-xl bg-gray-50/70 border border-gray-100">
+                    <div key={b.id} className="space-y-1.5 p-3 rounded-xl bg-gray-50/70 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700/60">
                       <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-gray-900">{b.category}</span>
-                        <span className={isOver ? 'text-danger font-black' : 'text-gray-500'}>
+                        <span className="text-gray-900 dark:text-white">{b.category}</span>
+                        <span className={isOver ? 'text-danger dark:text-red-400 font-black' : 'text-gray-500 dark:text-slate-400'}>
                           {percent.toFixed(0)}%
                         </span>
                       </div>
-                      <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div 
                           className={twMerge(
                             "h-full rounded-full transition-all duration-700",
@@ -586,7 +588,7 @@ const Dashboard = () => {
                           style={{ width: `${clamped}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium">
+                      <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-400 font-medium">
                         <span>Spent: {formatCurrency(b.spent)}</span>
                         <span>Limit: {formatCurrency(b.goal)}</span>
                       </div>

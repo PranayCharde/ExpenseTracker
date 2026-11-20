@@ -156,16 +156,21 @@ export default function AiAdvisorChat() {
   // Helper to render basic markdown lines with full Dark/Light high-contrast colors
   const renderFormattedText = (text) => {
     return text.split('\n').map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return <div key={idx} className="h-1.5" />;
+      }
+
       if (line.startsWith('### ')) {
         return (
-          <h4 key={idx} className={`font-extrabold text-sm mt-2 mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <h4 key={idx} className="font-black text-sm mt-2 mb-1 text-gray-900 dark:text-white">
             {line.replace('### ', '')}
           </h4>
         );
       }
       if (line.startsWith('#### ')) {
         return (
-          <h5 key={idx} className={`font-bold text-xs mt-2 mb-0.5 ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
+          <h5 key={idx} className="font-extrabold text-xs mt-2 mb-0.5 text-emerald-700 dark:text-emerald-400">
             {line.replace('#### ', '')}
           </h5>
         );
@@ -173,23 +178,44 @@ export default function AiAdvisorChat() {
       if (line.startsWith('- ')) {
         const itemContent = line.replace('- ', '');
         return (
-          <li key={idx} className={`ml-4 list-disc text-xs my-0.5 leading-relaxed ${isDark ? 'text-slate-200' : 'text-gray-700'}`}>
+          <li key={idx} className="ml-4 list-disc text-xs my-0.5 leading-relaxed text-gray-700 dark:text-slate-100">
             {formatInlineBold(itemContent)}
           </li>
         );
       }
       if (/^\d+\.\s/.test(line)) {
         return (
-          <p key={idx} className={`text-xs my-1 font-medium pl-1 ${isDark ? 'text-slate-200' : 'text-gray-700'}`}>
+          <p key={idx} className="text-xs my-1 font-medium pl-1 text-gray-700 dark:text-slate-100 leading-relaxed">
             {formatInlineBold(line)}
           </p>
         );
       }
-      if (!line.trim()) {
-        return <div key={idx} className="h-1.5" />;
+
+      // Special highlight for alert lines or emoji headings
+      if (trimmed.startsWith('⚠️') || trimmed.startsWith('🚨')) {
+        return (
+          <p key={idx} className="text-xs my-1 font-bold leading-relaxed text-amber-700 dark:text-amber-300">
+            {formatInlineBold(line)}
+          </p>
+        );
       }
+      if (trimmed.startsWith('🔮') || trimmed.startsWith('🎯') || trimmed.startsWith('🏆')) {
+        return (
+          <p key={idx} className="text-xs my-1 font-bold leading-relaxed text-purple-700 dark:text-purple-300">
+            {formatInlineBold(line)}
+          </p>
+        );
+      }
+      if (trimmed.startsWith('📋') || trimmed.startsWith('💡')) {
+        return (
+          <p key={idx} className="text-xs my-1 font-bold leading-relaxed text-teal-700 dark:text-teal-300">
+            {formatInlineBold(line)}
+          </p>
+        );
+      }
+
       return (
-        <p key={idx} className={`text-xs my-0.5 leading-relaxed ${isDark ? 'text-slate-200' : 'text-gray-700'}`}>
+        <p key={idx} className="text-xs my-0.5 leading-relaxed text-gray-700 dark:text-slate-100">
           {formatInlineBold(line)}
         </p>
       );
@@ -201,7 +227,7 @@ export default function AiAdvisorChat() {
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
-          <strong key={i} className={`font-extrabold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <strong key={i} className="font-extrabold text-gray-950 dark:text-white">
             {part.slice(2, -2)}
           </strong>
         );
