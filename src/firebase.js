@@ -4,12 +4,12 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCAQLFEdGoJWLPb3wAp96UpWOr79GeCG0Y",
-    authDomain: "spendwise-tracker-pranay-13.firebaseapp.com",
-    projectId: "spendwise-tracker-pranay-13",
-    storageBucket: "spendwise-tracker-pranay-13.firebasestorage.app",
-    messagingSenderId: "743686985267",
-    appId: "1:743686985267:web:ae77148cb0a353cd0f3546"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
