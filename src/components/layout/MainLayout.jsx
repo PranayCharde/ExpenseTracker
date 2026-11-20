@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import AiAdvisorChat from '../common/AiAdvisorChat';
 
 const MainLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 flex">
+    <div className="min-h-screen bg-gray-50/50 flex relative">
       {/* Mobile Backdrop */}
       {sidebarOpen && (
         <div 
@@ -26,6 +27,9 @@ const MainLayout = ({ children }) => {
           {children}
         </main>
       </div>
+
+      {/* Floating AI Financial Advisor */}
+      <AiAdvisorChat />
     </div>
   );
 };
